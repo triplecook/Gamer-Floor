@@ -13,7 +13,6 @@ canvas { cursor: default; }
 <body>
 <a class="back" href="index.html">← Back</a>
 <audio id="music" src="music-space.mp3" loop></audio>
-<body>
 <canvas id="game" width="700" height="500"></canvas>
 <script>
 document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });
@@ -345,6 +344,10 @@ function draw() {
   ctx.fillStyle = '#fff'; ctx.font = 'bold 14px monospace';
   ctx.fillText('SCORE: ' + score, 10, 25);
   ctx.fillText('LEVEL: ' + level, 10, 45);
+  // Mute button
+  ctx.fillStyle = '#333'; ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
+  ctx.fillRect(610, 470, 80, 24); ctx.strokeRect(610, 470, 80, 24);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 12px monospace'; ctx.fillText(musicMuted ? '🔇 Mute' : '🔊 Music', 617, 486);
   // Lives
   for (let i = 0; i < lives; i++) {
     ctx.fillStyle = '#f44'; ctx.beginPath();
@@ -379,7 +382,15 @@ function draw() {
   ctx.restore();
 }
 
-canvas.addEventListener('click', () => {
+let musicMuted = false;
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  // Mute button area: top-right corner
+  if (mx >= 610 && mx <= 690 && my >= 470 && my <= 494) {
+    const m = document.getElementById('music');
+    musicMuted = !musicMuted; m.muted = musicMuted; return;
+  }
   if (gameState === 'gameover') {
     gameState = 'playing'; level = 1; score = 0; lives = 5; killCount = 0;
     killsToNextLevel = 20; bullets = []; enemies = []; particles = [];
