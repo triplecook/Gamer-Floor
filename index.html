@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head>
+<title>Game Arcade</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1a; color: #fff; font-family: 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(90deg, #0af, #f0a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+p.sub { color: #888; margin-bottom: 40px; }
+.games { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 800px; width: 100%; }
+.card { background: #151525; border: 1px solid #2a2a4a; border-radius: 12px; padding: 24px; text-decoration: none; color: #fff; transition: transform 0.2s, border-color 0.2s; }
+.card:hover { transform: translateY(-4px); border-color: #0af; }
+.card h2 { font-size: 1.2rem; margin-bottom: 8px; }
+.card p { color: #888; font-size: 0.85rem; line-height: 1.4; }
+.tag { display: inline-block; background: #0af3; color: #0af; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; margin-top: 10px; }
+</style>
+</head><body>
+<h1>🎮 Game Arcade</h1>
+<p class="sub">Pick a game to play!</p>
+<div class="games">
+  <a class="card" href="driving.html">
+    <h2>🚗 Lane Dodger</h2>
+    <p>Dodge traffic across 6 lanes. Multiple difficulty levels — survive 60 seconds to win!</p>
+    <span class="tag">Racing</span>
+  </a>
+  <a class="card" href="spaceshooter.html">
+    <h2>🚀 Space Shooter</h2>
+    <p>Blast waves of aliens with power-ups. Auto-fire, multiple enemy types, level progression.</p>
+    <span class="tag">Shooter</span>
+  </a>
+  <a class="card" href="streetfighter.html">
+    <h2>🥊 Street Fighter</h2>
+    <p>Local 2-player fighting game with combos, power-ups, and special moves.</p>
+    <span class="tag">Fighting</span>
+  </a>
+</div>
+</body></html>
