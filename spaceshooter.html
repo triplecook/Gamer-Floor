@@ -12,9 +12,11 @@ canvas { cursor: default; }
 </head>
 <body>
 <a class="back" href="index.html">← Back</a>
+<audio id="music" src="music-space.mp3" loop></audio>
 <body>
 <canvas id="game" width="700" height="500"></canvas>
 <script>
+document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 

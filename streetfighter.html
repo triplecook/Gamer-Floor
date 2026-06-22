@@ -13,9 +13,11 @@ canvas { border: 2px solid #444; cursor: crosshair; }
 </head>
 <body>
 <a class="back" href="index.html">← Back</a>
+<audio id="music" src="music-fighter.mp3" loop></audio>
 <canvas id="game" width="800" height="400"></canvas>
 <div id="controls">WASD move (W jump) | U: Punch | I: Kick | K: Uppercut | J: Sliding Kick</div>
 <script>
+document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 canvas.addEventListener('contextmenu', e => e.preventDefault());

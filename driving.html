@@ -9,8 +9,10 @@ canvas { border: 2px solid #333; }
 </style>
 </head><body>
 <a class="back" href="index.html">← Back</a>
+<audio id="music" src="music-driving.mp3" loop></audio>
 <canvas id="game" width="560" height="700"></canvas>
 <script>
+document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const LANES = 6, LANE_W = 72, ROAD_X = (560 - LANES * LANE_W) / 2;
