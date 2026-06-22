@@ -6,8 +6,12 @@
 * { margin: 0; padding: 0; }
 body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
 canvas { cursor: default; }
+.back { position: fixed; top: 15px; left: 15px; background: #222; color: #fff; border: 1px solid #555; padding: 8px 16px; border-radius: 6px; font-family: monospace; cursor: pointer; text-decoration: none; z-index: 999; }
+.back:hover { background: #444; }
 </style>
 </head>
+<body>
+<a class="back" href="index.html">← Back</a>
 <body>
 <canvas id="game" width="700" height="500"></canvas>
 <script>
