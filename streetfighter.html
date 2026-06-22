@@ -14,7 +14,7 @@ canvas { border: 2px solid #444; cursor: crosshair; }
 <body>
 <a class="back" href="index.html">← Back</a>
 <canvas id="game" width="800" height="400"></canvas>
-<div id="controls">WASD move (W jump) | Left-click: Punch | Right-click: Kick | E: Uppercut | Q: Sliding Kick</div>
+<div id="controls">WASD move (W jump) | U: Punch | I: Kick | K: Uppercut | J: Sliding Kick</div>
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -94,14 +94,12 @@ function startAttack(f, type) {
   if (type === 'slide') f.sliding = true;
 }
 
-canvas.addEventListener('mousedown', e => {
-  if (gameOver) { restart(); return; }
-  if (e.button === 0) startAttack(player, 'punch');
-  if (e.button === 2) startAttack(player, 'kick');
-});
 document.addEventListener('keydown', e => {
-  if (e.key.toLowerCase() === 'e') startAttack(player, 'uppercut');
-  if (e.key.toLowerCase() === 'q') startAttack(player, 'slide');
+  if (gameOver && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 'i')) { restart(); return; }
+  if (e.key.toLowerCase() === 'u') startAttack(player, 'punch');
+  if (e.key.toLowerCase() === 'i') startAttack(player, 'kick');
+  if (e.key.toLowerCase() === 'k') startAttack(player, 'uppercut');
+  if (e.key.toLowerCase() === 'j') startAttack(player, 'slide');
 });
 
 function restart() {
@@ -486,7 +484,7 @@ function loop() {
     ctx.fillStyle = '#ffcc00'; ctx.font = 'bold 38px monospace'; ctx.textAlign = 'center';
     ctx.fillText(gameOver, 400, 200); ctx.shadowBlur = 0;
     ctx.fillStyle = '#fff'; ctx.font = '14px monospace';
-    ctx.fillText('Click to rematch', 400, 235); ctx.textAlign = 'left';
+    ctx.fillText('Press U or I to rematch', 400, 235); ctx.textAlign = 'left';
   }
   ctx.restore();
   requestAnimationFrame(loop);
