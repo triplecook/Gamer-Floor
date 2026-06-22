@@ -58,7 +58,9 @@ footer { margin-top: 50px; color: #555; font-size: 0.8rem; }
 <footer>Built with ❤️</footer>
 </div>
 <script>
-document.addEventListener('click', () => { const m = document.getElementById('music'); m.volume = 0.4; m.play(); }, { once: true });
+function startMusic() { const m = document.getElementById('music'); m.volume = 0.4; m.play(); }
+document.addEventListener('mousemove', startMusic, { once: true });
+document.addEventListener('keydown', startMusic, { once: true });
 const canvas = document.getElementById('bg');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
