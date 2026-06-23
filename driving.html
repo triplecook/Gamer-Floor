@@ -24,7 +24,7 @@ const LANE_CENTER = i => ROAD_X + i * LANE_W + LANE_W / 2;
 const DIFFICULTIES = {
   beginner: { baseSpeed: 2.5, accel: 0.05, spawnBase: 50, spawnMin: 25, carH: 68, truckH: 160, invisWalls: false, sneakyTurners: false, trafficLights: false },
   intermediate: { baseSpeed: 3.5, accel: 0.1, spawnBase: 40, spawnMin: 18, carH: 74, truckH: 180, invisWalls: false, sneakyTurners: false, trafficLights: false },
-  hard: { baseSpeed: 4.5, accel: 0.15, spawnBase: 32, spawnMin: 12, carH: 80, truckH: 200, invisWalls: false, sneakyTurners: false, trafficLights: false },
+  hard: { baseSpeed: 4.5, accel: 0.15, spawnBase: 32, spawnMin: 12, carH: 80, truckH: 200, invisWalls: false, sneakyTurners: false, trafficLights: true },
   impossible: { baseSpeed: 5.5, accel: 0.2, spawnBase: 25, spawnMin: 8, carH: 85, truckH: 220, invisWalls: true, sneakyTurners: true, trafficLights: true }
 };
 
@@ -60,14 +60,14 @@ document.addEventListener('keydown', e => {
 function spawnObstacle() {
   const type = Math.random();
   let lane = Math.floor(Math.random() * LANES);
-  // Prevent overlap: find a lane without a recent obstacle near the top
+  // Prevent overlap: find a lane without an obstacle very near spawn point
   let attempts=0;
   while(attempts<LANES){
-    const blocked=obstacles.some(o=>o.lane===lane&&o.y<100);
+    const blocked=obstacles.some(o=>o.lane===lane&&o.y<0);
     if(!blocked)break;
     lane=(lane+1)%LANES;attempts++;
   }
-  if(attempts>=LANES)return; // all lanes full near top, skip spawn
+  if(attempts>=LANES)return;
   if (type < 0.07) {
     const count = 2 + Math.floor(Math.random() * 2);
     for (let c = 0; c < count; c++)
@@ -88,7 +88,7 @@ function spawnObstacle() {
 
 function spawnTrafficLight() {
   if (!diff.trafficLights) return;
-  if (Math.random() < 0.008 && trafficLights.length < 2) {
+  if (Math.random() < 0.02 && trafficLights.length < 3) {
     const lane = Math.floor(Math.random() * LANES);
     const isRed = Math.random() < 0.5;
     trafficLights.push({ lane, x: LANE_CENTER(lane), y: -40, w: 20, h: 40, isRed });
