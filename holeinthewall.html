@@ -18,7 +18,7 @@ body{background:#000;overflow:hidden;font-family:monospace;}
 <a class="back" href="index.html">← Back</a>
 <button class="mute-btn" onclick="musicMuted=!musicMuted;this.textContent=musicMuted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
 <div id="hud">Score: 0 | ♥♥♥</div>
-<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Run forward and dodge through gaps in the walls!<br><br>WASD to move • Mouse to look left/right<br>Click to start (locks pointer)</p><button onclick="startGame()">START</button></div>
+<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Run forward and dodge through gaps in the walls!<br><br>A/D to strafe • W/S speed up/down • Space to jump<br>Mouse to look left/right</p><button onclick="startGame()">START</button></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 let musicMuted=false;
@@ -98,22 +98,27 @@ const dirtGeo=new THREE.PlaneGeometry(40,4);
 const dirtMat=new THREE.MeshLambertMaterial({color:0x8B5E3C});
 const dirt=new THREE.Mesh(dirtGeo,dirtMat);dirt.position.set(0,-2,-60);scene.add(dirt);
 
-// Block geometry (1.5 units = bigger blocks)
-const BLK=1.5;
+// Block geometry (2 units = big blocks)
+const BLK=2;
 const blockGeo=new THREE.BoxGeometry(BLK,BLK,BLK);
 
 // Game state
 let gameState='menu',score=0,lives=3,walls=[],yaw=0;
-let playerZ=0,playerX=0,runSpeed=18;
+let playerZ=0,playerX=0,playerY=0,velY=0,runSpeed=18;
 const keys={};
-document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')e.preventDefault();});
 document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 
-// Mouse look (left/right only, clamped so can't turn backwards)
+// Mouse look - works with and without pointer lock
 document.addEventListener('mousemove',e=>{
-  if(document.pointerLockElement&&gameState==='playing'){
-    yaw-=e.movementX*0.002;
-    yaw=Math.max(-1.2,Math.min(1.2,yaw));// clamp ~70 degrees each side
+  if(gameState==='playing'){
+    if(document.pointerLockElement){
+      yaw-=e.movementX*0.003;
+    }else{
+      // Use mouse X position relative to screen center
+      yaw=-(e.clientX-window.innerWidth/2)/window.innerWidth*2;
+    }
+    yaw=Math.max(-1.2,Math.min(1.2,yaw));
   }
 });
 renderer.domElement.addEventListener('click',()=>{if(gameState==='playing')renderer.domElement.requestPointerLock();});
@@ -124,11 +129,11 @@ function createWall(z){
   const group=new THREE.Group();
   const color=CONCRETE[Math.floor(Math.random()*CONCRETE.length)];
   const mat=new THREE.MeshLambertMaterial({color});
-  // Pick gap position (ensure 3x3 gap fits)
-  const gapX=Math.floor(Math.random()*(GRID_W-2));
-  const gapY=Math.floor(Math.random()*(GRID_H-2));
+  // Pick gap position (4x4 gap)
+  const gapX=Math.floor(Math.random()*(GRID_W-3));
+  const gapY=Math.floor(Math.random()*(GRID_H-3));
   const gap=new Set();
-  for(let dx=0;dx<3;dx++)for(let dy=0;dy<3;dy++)gap.add((gapX+dx)+','+(gapY+dy));
+  for(let dx=0;dx<4;dx++)for(let dy=0;dy<4;dy++)gap.add((gapX+dx)+','+(gapY+dy));
   for(let x=0;x<GRID_W;x++){
     for(let y=0;y<GRID_H;y++){
       if(!gap.has(x+','+y)){
@@ -147,13 +152,10 @@ function createWall(z){
 
 function checkHit(wall){
   const w=wall.userData;
-  // Player position in grid coords relative to wall center
   const px=Math.round((playerX)/BLK+GRID_W/2-0.5);
-  const py=0;// player is on ground (occupies y=0,1,2)
-  // Check if player overlaps with a block
+  const py=Math.round(playerY/BLK);
   for(let dy=0;dy<2;dy++){
-    const key=px+','+(py+dy);
-    const isGap=(px>=w.gapX&&px<w.gapX+3&&(py+dy)>=w.gapY&&(py+dy)<w.gapY+3);
+    const isGap=(px>=w.gapX&&px<w.gapX+4&&(py+dy)>=w.gapY&&(py+dy)<w.gapY+4);
     if(!isGap&&px>=0&&px<GRID_W)return true;
   }
   return false;
@@ -172,7 +174,7 @@ function startGame(){
   musicPlaying=true;lastBeat=audioCtx.currentTime;beatCount=0;
   gameState='playing';score=0;lives=3;yaw=0;
   walls.forEach(w=>scene.remove(w));walls=[];
-  playerZ=0;playerX=0;runSpeed=18;
+  playerZ=0;playerX=0;playerY=0;velY=0;runSpeed=18;
   spawnWalls();updateHUD();
 }
 
@@ -201,13 +203,18 @@ function animate(){
   const strafeSpeed=12*dt;
   if(keys['a']||keys['arrowleft'])playerX-=strafeSpeed;
   if(keys['d']||keys['arrowright'])playerX+=strafeSpeed;
-  playerX=Math.max(-6,Math.min(6,playerX));
+  playerX=Math.max(-8,Math.min(8,playerX));
   // W/S for speed
   if(keys['w']||keys['arrowup'])runSpeed=Math.min(30,runSpeed+10*dt);
   if(keys['s']||keys['arrowdown'])runSpeed=Math.max(8,runSpeed-10*dt);
+  // Jump
+  if(keys[' ']&&playerY===0)velY=12;
+  velY-=30*dt;
+  playerY+=velY*dt;
+  if(playerY<=0){playerY=0;velY=0;}
 
   // Camera
-  camera.position.set(playerX,2.2,playerZ+2);
+  camera.position.set(playerX,2.2+playerY,playerZ+2);
   camera.rotation.set(0,yaw,0);
 
   // Check walls
