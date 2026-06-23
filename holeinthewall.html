@@ -3,76 +3,82 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#000;overflow:hidden;font-family:monospace;}
-canvas{display:block;}
+#hud{position:fixed;top:15px;left:50%;transform:translateX(-50%);color:#fff;font-size:16px;text-align:center;z-index:100;text-shadow:0 0 8px #0ff;pointer-events:none;}
+#start-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;color:#fff;}
+#start-screen h1{font-size:2.5rem;background:linear-gradient(135deg,#0ff,#f0f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;}
+#start-screen p{color:#aaa;margin-bottom:24px;font-size:13px;max-width:380px;text-align:center;line-height:1.6;}
+#start-screen button{background:#222;color:#0ff;border:2px solid #0ff;padding:12px 32px;font-size:16px;font-family:monospace;cursor:pointer;border-radius:8px;}
+#start-screen button:hover{background:#0ff;color:#000;}
 .back{position:fixed;top:15px;left:15px;background:#222;color:#fff;border:1px solid #555;padding:8px 16px;border-radius:6px;font-family:monospace;cursor:pointer;text-decoration:none;z-index:999;}
 .back:hover{background:#444;}
 .mute-btn{position:fixed;top:15px;right:15px;background:#222;color:#fff;border:1px solid #555;padding:8px 16px;border-radius:6px;font-family:monospace;cursor:pointer;z-index:9999;}
 .mute-btn:hover{background:#444;}
-#hud{position:fixed;top:50px;left:50%;transform:translateX(-50%);color:#fff;font-size:18px;text-align:center;z-index:100;text-shadow:0 0 10px #0ff;}
-#start-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;color:#fff;}
-#start-screen h1{font-size:3rem;background:linear-gradient(135deg,#0ff,#f0f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px;}
-#start-screen p{color:#aaa;margin-bottom:30px;font-size:14px;max-width:400px;text-align:center;line-height:1.6;}
-#start-screen button{background:#222;color:#0ff;border:2px solid #0ff;padding:12px 32px;font-size:16px;font-family:monospace;cursor:pointer;border-radius:8px;}
-#start-screen button:hover{background:#0ff;color:#000;}
 </style>
 </head><body>
 <a class="back" href="index.html">← Back</a>
 <button class="mute-btn" onclick="musicMuted=!musicMuted;this.textContent=musicMuted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
-<div id="hud">Score: 0 | Combo: 0x</div>
-<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Move your character to fit through the holes in approaching walls!<br><br>WASD/Arrows to move • Space to duck<br>Walls sync to the beat — feel the rhythm!</p><button onclick="startGame()">START</button></div>
+<div id="hud">Score: 0 | ♥♥♥</div>
+<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Run forward and dodge through gaps in the walls!<br><br>WASD to move • Mouse to look left/right<br>Click to start (locks pointer)</p><button onclick="startGame()">START</button></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 let musicMuted=false;
-// Audio context & music
-let audioCtx,musicPlaying=false,bpm=130,beatInterval,lastBeat=0,beatCount=0;
-function initAudio(){
-  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  beatInterval=60/bpm;
-}
-function playNote(freq,time,dur,type='square',vol=0.12){
+let audioCtx,musicPlaying=false,lastBeat=0,beatCount=0;
+const bpm=128,beatInterval=60/bpm;
+function initAudio(){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function playNote(freq,time,dur,type,vol){
   if(musicMuted)return;
   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type=type;o.frequency.value=freq;
   g.gain.setValueAtTime(vol,time);g.gain.exponentialRampToValueAtTime(0.001,time+dur);
-  o.connect(g);g.connect(audioCtx.destination);
-  o.start(time);o.stop(time+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start(time);o.stop(time+dur+0.01);
 }
 function playBeat(time,beat){
-  // Bass drum
-  const kick=audioCtx.createOscillator(),kg=audioCtx.createGain();
-  kick.type='sine';kick.frequency.setValueAtTime(150,time);kick.frequency.exponentialRampToValueAtTime(30,time+0.1);
-  kg.gain.setValueAtTime(musicMuted?0:0.4,time);kg.gain.exponentialRampToValueAtTime(0.001,time+0.15);
-  kick.connect(kg);kg.connect(audioCtx.destination);kick.start(time);kick.stop(time+0.2);
-  // Hi-hat on off-beats
-  if(beat%2===1){
-    const n=audioCtx.createBufferSource(),buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.05,audioCtx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.3;
-    n.buffer=buf;const ng=audioCtx.createGain();ng.gain.setValueAtTime(musicMuted?0:0.15,time);ng.gain.exponentialRampToValueAtTime(0.001,time+0.05);
-    n.connect(ng);ng.connect(audioCtx.destination);n.start(time);
-  }
+  if(musicMuted)return;
+  // Kick every beat
+  const k=audioCtx.createOscillator(),kg=audioCtx.createGain();
+  k.type='sine';k.frequency.setValueAtTime(140,time);k.frequency.exponentialRampToValueAtTime(30,time+0.1);
+  kg.gain.setValueAtTime(0.35,time);kg.gain.exponentialRampToValueAtTime(0.001,time+0.15);
+  k.connect(kg);kg.connect(audioCtx.destination);k.start(time);k.stop(time+0.2);
+  // Hi-hat off-beats
+  if(beat%2===1){const b=audioCtx.createBuffer(1,audioCtx.sampleRate*0.04,audioCtx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);const n=audioCtx.createBufferSource();n.buffer=b;const ng=audioCtx.createGain();ng.gain.setValueAtTime(0.1,time);ng.gain.exponentialRampToValueAtTime(0.001,time+0.04);n.connect(ng);ng.connect(audioCtx.destination);n.start(time);}
   // Melody
-  const melody=[262,294,330,392,440,392,330,294,349,392,440,523,494,440,392,330];
-  const note=melody[beat%melody.length];
-  playNote(note,time,beatInterval*0.6,'sawtooth',0.06);
-  // Bass line
-  const bass=[65,65,87,87,73,73,98,98];
-  playNote(bass[beat%bass.length],time,beatInterval*0.8,'triangle',0.15);
+  const mel=[330,330,392,440,392,330,294,330,349,392,440,523,494,440,392,349];
+  playNote(mel[beat%mel.length],time,beatInterval*0.5,'sawtooth',0.05);
+  // Bass
+  const bass=[82,82,110,110,98,98,73,73];
+  playNote(bass[beat%bass.length],time,beatInterval*0.7,'triangle',0.12);
 }
 function scheduleBeat(){
   if(!musicPlaying)return;
   const now=audioCtx.currentTime;
-  while(lastBeat<now+0.2){
-    playBeat(lastBeat,beatCount);
-    lastBeat+=beatInterval;beatCount++;
-  }
+  while(lastBeat<now+0.2){playBeat(lastBeat,beatCount);lastBeat+=beatInterval;beatCount++;}
 }
 
-// Three.js setup
+// Minecraft concrete colors
+const CONCRETE=[
+  0xCFD5D6,// white
+  0xE06101,// orange
+  0xA9309F,// magenta
+  0x2489C7,// light blue
+  0xF1AF15,// yellow
+  0x5EA918,// lime
+  0xD5658F,// pink
+  0x3A3B3F,// gray
+  0x7D7D73,// light gray
+  0x157788,// cyan
+  0x64209C,// purple
+  0x2D2F8F,// blue
+  0x603C20,// brown
+  0x495B24,// green
+  0x8E2121,// red
+  0x141519 // black
+];
+
+// Three.js
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x111122);
-scene.fog=new THREE.Fog(0x111122,20,60);
-const camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,0.1,100);
-camera.position.set(0,3,12);camera.lookAt(0,2,0);
+scene.background=new THREE.Color(0x87CEEB);
+scene.fog=new THREE.Fog(0x87CEEB,30,80);
+const camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,100);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -80,198 +86,153 @@ document.body.appendChild(renderer.domElement);
 window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
 
 // Lighting
-scene.add(new THREE.AmbientLight(0x404060));
-const dirLight=new THREE.DirectionalLight(0xffffff,0.8);dirLight.position.set(5,10,5);scene.add(dirLight);
-const pointLight=new THREE.PointLight(0x00ffff,0.5,20);pointLight.position.set(0,5,10);scene.add(pointLight);
+scene.add(new THREE.AmbientLight(0x606080));
+const sun=new THREE.DirectionalLight(0xffffff,1);sun.position.set(5,15,10);scene.add(sun);
 
-// Voxel materials (Minecraft-style)
-const blockMats={
-  stone:new THREE.MeshLambertMaterial({color:0x888888}),
-  dirt:new THREE.MeshLambertMaterial({color:0x8B5E3C}),
-  grass:new THREE.MeshLambertMaterial({color:0x4CAF50}),
-  gold:new THREE.MeshLambertMaterial({color:0xFFD700}),
-  diamond:new THREE.MeshLambertMaterial({color:0x00BCD4}),
-  obsidian:new THREE.MeshLambertMaterial({color:0x1a0a2a}),
-  lava:new THREE.MeshLambertMaterial({color:0xFF5722,emissive:0x441100}),
-  ice:new THREE.MeshLambertMaterial({color:0x88DDFF,transparent:true,opacity:0.8})
-};
-const wallMats=[blockMats.stone,blockMats.dirt,blockMats.obsidian,blockMats.lava,blockMats.ice,blockMats.gold];
-const blockGeo=new THREE.BoxGeometry(1,1,1);
+// Ground (grass block style)
+const groundGeo=new THREE.PlaneGeometry(40,200);
+const groundMat=new THREE.MeshLambertMaterial({color:0x5B8C3E});
+const ground=new THREE.Mesh(groundGeo,groundMat);ground.rotation.x=-Math.PI/2;ground.position.set(0,0,-60);scene.add(ground);
+// Dirt sides
+const dirtGeo=new THREE.PlaneGeometry(40,4);
+const dirtMat=new THREE.MeshLambertMaterial({color:0x8B5E3C});
+const dirt=new THREE.Mesh(dirtGeo,dirtMat);dirt.position.set(0,-2,-60);scene.add(dirt);
 
-// Floor
-const floorGeo=new THREE.PlaneGeometry(20,80);
-const floorMat=new THREE.MeshLambertMaterial({color:0x2a5a2a});
-const floor=new THREE.Mesh(floorGeo,floorMat);
-floor.rotation.x=-Math.PI/2;floor.position.set(0,0,-20);
-scene.add(floor);
-// Grid lines on floor
-const gridHelper=new THREE.GridHelper(20,20,0x3a7a3a,0x1a4a1a);
-gridHelper.position.y=0.01;scene.add(gridHelper);
-
-// Player (voxel character)
-const playerGroup=new THREE.Group();
-const bodyMat=new THREE.MeshLambertMaterial({color:0x00aaff});
-const headMat=new THREE.MeshLambertMaterial({color:0xffcc88});
-const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.6),bodyMat);body.position.y=1.6;
-const head=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),headMat);head.position.y=2.55;
-const legL=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.4),new THREE.MeshLambertMaterial({color:0x333366}));legL.position.set(-0.2,0.4,0);
-const legR=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.4),new THREE.MeshLambertMaterial({color:0x333366}));legR.position.set(0.2,0.4,0);
-playerGroup.add(body,head,legL,legR);
-scene.add(playerGroup);
+// Block geometry (1.5 units = bigger blocks)
+const BLK=1.5;
+const blockGeo=new THREE.BoxGeometry(BLK,BLK,BLK);
 
 // Game state
-let gameState='menu',score=0,combo=0,lives=3,walls=[],playerPos={x:0,y:0},playerDucking=false;
-const GRID_W=7,GRID_H=5; // wall grid size
+let gameState='menu',score=0,lives=3,walls=[],yaw=0;
+let playerZ=0,playerX=0,runSpeed=18;
 const keys={};
-document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')e.preventDefault();});
-document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
+document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 
+// Mouse look (left/right only, clamped so can't turn backwards)
+document.addEventListener('mousemove',e=>{
+  if(document.pointerLockElement&&gameState==='playing'){
+    yaw-=e.movementX*0.002;
+    yaw=Math.max(-1.2,Math.min(1.2,yaw));// clamp ~70 degrees each side
+  }
+});
+renderer.domElement.addEventListener('click',()=>{if(gameState==='playing')renderer.domElement.requestPointerLock();});
+
+// Wall grid: 9 wide x 5 tall, gaps are 3x3 blocks removed
+const GRID_W=9,GRID_H=5;
 function createWall(z){
   const group=new THREE.Group();
-  const mat=wallMats[Math.floor(Math.random()*wallMats.length)];
-  // Generate hole pattern (random shape)
-  const hole=new Set();
-  const hx=Math.floor(Math.random()*(GRID_W-2))+1;
-  const hy=Math.floor(Math.random()*(GRID_H-2));
-  // Hole shapes
-  const shapes=[
-    [[0,0],[0,1],[0,2]],// vertical
-    [[0,0],[1,0],[2,0]],// horizontal
-    [[0,0],[1,0],[0,1],[1,1]],// square
-    [[0,0],[1,0],[1,1]],// L shape
-    [[0,0],[0,1],[1,1]],// reverse L
-    [[0,0],[1,0],[2,0],[1,1]],// T shape
-    [[0,0],[0,1],[0,2],[0,3]],// tall
-  ];
-  const shape=shapes[Math.floor(Math.random()*shapes.length)];
-  shape.forEach(([dx,dy])=>{
-    const gx=Math.min(GRID_W-1,hx+dx),gy=Math.min(GRID_H-1,hy+dy);
-    hole.add(gx+','+gy);
-  });
-  // Build wall blocks
+  const color=CONCRETE[Math.floor(Math.random()*CONCRETE.length)];
+  const mat=new THREE.MeshLambertMaterial({color});
+  // Pick gap position (ensure 3x3 gap fits)
+  const gapX=Math.floor(Math.random()*(GRID_W-2));
+  const gapY=Math.floor(Math.random()*(GRID_H-2));
+  const gap=new Set();
+  for(let dx=0;dx<3;dx++)for(let dy=0;dy<3;dy++)gap.add((gapX+dx)+','+(gapY+dy));
   for(let x=0;x<GRID_W;x++){
     for(let y=0;y<GRID_H;y++){
-      if(!hole.has(x+','+y)){
+      if(!gap.has(x+','+y)){
         const block=new THREE.Mesh(blockGeo,mat);
-        block.position.set(x-GRID_W/2+0.5,y+0.5,0);
+        block.position.set((x-GRID_W/2+0.5)*BLK,y*BLK+BLK/2,(0));
+        block.castShadow=true;
         group.add(block);
       }
     }
   }
-  // Outline glow for hole
-  shape.forEach(([dx,dy])=>{
-    const gx=Math.min(GRID_W-1,hx+dx),gy=Math.min(GRID_H-1,hy+dy);
-    const glow=new THREE.Mesh(new THREE.BoxGeometry(1.05,1.05,0.1),new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.3}));
-    glow.position.set(gx-GRID_W/2+0.5,gy+0.5,0.5);
-    group.add(glow);
-  });
   group.position.z=z;
-  group.userData={hole,passed:false,hx,hy,shape};
+  group.userData={gapX,gapY,passed:false};
   scene.add(group);
   return group;
 }
 
-function checkCollision(wall){
-  const hole=wall.userData.hole;
-  // Player grid position
-  const px=Math.round(playerPos.x+GRID_W/2-0.5);
-  const py=playerDucking?0:Math.round(playerPos.y);
-  // Player occupies cells based on size
-  const playerCells=playerDucking?[[px,0],[px,1]]:[[px,py],[px,py+1],[px,py+2]];
-  for(const[cx,cy] of playerCells){
-    if(cx<0||cx>=GRID_W||cy<0||cy>=GRID_H)continue;
-    if(!hole.has(cx+','+cy))return true; // hit
+function checkHit(wall){
+  const w=wall.userData;
+  // Player position in grid coords relative to wall center
+  const px=Math.round((playerX)/BLK+GRID_W/2-0.5);
+  const py=0;// player is on ground (occupies y=0,1,2)
+  // Check if player overlaps with a block
+  for(let dy=0;dy<2;dy++){
+    const key=px+','+(py+dy);
+    const isGap=(px>=w.gapX&&px<w.gapX+3&&(py+dy)>=w.gapY&&(py+dy)<w.gapY+3);
+    if(!isGap&&px>=0&&px<GRID_W)return true;
   }
   return false;
 }
 
-function spawnWall(){
-  const w=createWall(-50);
-  walls.push(w);
+function spawnWalls(){
+  for(let i=0;i<6;i++){
+    walls.push(createWall(playerZ-30-i*20));
+  }
 }
 
-let wallSpeed=12,lastWallSpawn=0,wallInterval=2;
 function startGame(){
   document.getElementById('start-screen').style.display='none';
-  initAudio();musicPlaying=true;lastBeat=audioCtx.currentTime;beatCount=0;
-  gameState='playing';score=0;combo=0;lives=3;
+  renderer.domElement.requestPointerLock();
+  if(!audioCtx)initAudio();
+  musicPlaying=true;lastBeat=audioCtx.currentTime;beatCount=0;
+  gameState='playing';score=0;lives=3;yaw=0;
   walls.forEach(w=>scene.remove(w));walls=[];
-  playerPos={x:0,y:0};playerDucking=false;
-  wallSpeed=12;wallInterval=2;lastWallSpawn=-wallInterval;
-  for(let i=0;i<4;i++)spawnWall();
-  walls.forEach((w,i)=>w.position.z=-15-i*15);
-}
-
-let prevTime=performance.now();
-function animate(){
-  requestAnimationFrame(animate);
-  const now=performance.now(),dt=(now-prevTime)/1000;prevTime=now;
-  if(musicPlaying)scheduleBeat();
-  if(gameState!=='playing'){renderer.render(scene,camera);return;}
-
-  // Player movement
-  const moveSpeed=6*dt;
-  if(keys['a']||keys['arrowleft'])playerPos.x=Math.max(-GRID_W/2+1,playerPos.x-moveSpeed);
-  if(keys['d']||keys['arrowright'])playerPos.x=Math.min(GRID_W/2-1,playerPos.x+moveSpeed);
-  if(keys['w']||keys['arrowup'])playerPos.y=Math.min(GRID_H-3,playerPos.y+moveSpeed);
-  if(keys['s']||keys['arrowdown'])playerPos.y=Math.max(0,playerPos.y-moveSpeed);
-  playerDucking=keys[' '];
-
-  // Update player visual
-  playerGroup.position.set(playerPos.x,playerDucking?-0.5:playerPos.y,8);
-  playerGroup.scale.y=playerDucking?0.5:1;
-  // Bob animation
-  body.position.y=1.6+Math.sin(now*0.005)*0.05;
-
-  // Move walls
-  for(let i=walls.length-1;i>=0;i--){
-    const w=walls[i];
-    w.position.z+=wallSpeed*dt;
-    // Beat pulse - scale walls slightly on beat
-    const beatPhase=(audioCtx.currentTime%beatInterval)/beatInterval;
-    const pulse=1+Math.max(0,Math.sin(beatPhase*Math.PI*2))*0.02;
-    w.scale.set(pulse,pulse,1);
-    // Check pass
-    if(!w.userData.passed&&w.position.z>7.5&&w.position.z<9){
-      w.userData.passed=true;
-      if(checkCollision(w)){
-        combo=0;lives--;
-        pointLight.color.setHex(0xff0000);
-        if(lives<=0){gameState='over';musicPlaying=false;showGameOver();}
-      }else{
-        score+=10*(combo+1);combo++;
-        pointLight.color.setHex(0x00ff88);
-      }
-      updateHUD();
-    }
-    // Remove passed walls
-    if(w.position.z>15){scene.remove(w);walls.splice(i,1);spawnWall();}
-  }
-  // Light color fade back
-  pointLight.color.lerp(new THREE.Color(0x00ffff),dt*2);
-
-  // Speed up over time
-  wallSpeed=12+score*0.01;
-  wallInterval=Math.max(0.8,2-score*0.002);
-
-  // Camera shake on beat
-  const bp=(audioCtx.currentTime%beatInterval)/beatInterval;
-  camera.position.y=3+Math.sin(bp*Math.PI*2)*0.05;
-
-  renderer.render(scene,camera);
+  playerZ=0;playerX=0;runSpeed=18;
+  spawnWalls();updateHUD();
 }
 
 function updateHUD(){
-  document.getElementById('hud').innerHTML='Score: '+score+' | Combo: '+combo+'x | '+'♥'.repeat(lives);
+  document.getElementById('hud').innerHTML='Score: '+score+' | '+'♥'.repeat(lives)+'♡'.repeat(3-lives);
 }
 
-function showGameOver(){
+function showEnd(){
+  document.exitPointerLock();musicPlaying=false;
   const ss=document.getElementById('start-screen');
   ss.style.display='flex';
-  ss.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'<br>Best Combo: '+combo+'x</p><button onclick="startGame()">PLAY AGAIN</button>';
+  ss.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><button onclick="startGame()">PLAY AGAIN</button>';
 }
 
-updateHUD();
+let prev=performance.now();
+function animate(){
+  requestAnimationFrame(animate);
+  const now=performance.now(),dt=Math.min((now-prev)/1000,0.05);prev=now;
+  if(musicPlaying)scheduleBeat();
+  if(gameState!=='playing'){renderer.render(scene,camera);return;}
+
+  // Auto run forward + strafe
+  const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  playerZ-=runSpeed*dt;
+  const strafeSpeed=12*dt;
+  if(keys['a']||keys['arrowleft'])playerX-=strafeSpeed;
+  if(keys['d']||keys['arrowright'])playerX+=strafeSpeed;
+  playerX=Math.max(-6,Math.min(6,playerX));
+  // W/S for speed
+  if(keys['w']||keys['arrowup'])runSpeed=Math.min(30,runSpeed+10*dt);
+  if(keys['s']||keys['arrowdown'])runSpeed=Math.max(8,runSpeed-10*dt);
+
+  // Camera
+  camera.position.set(playerX,2.2,playerZ+2);
+  camera.rotation.set(0,yaw,0);
+
+  // Check walls
+  for(let i=walls.length-1;i>=0;i--){
+    const w=walls[i];
+    // Wall passed player
+    if(!w.userData.passed&&w.position.z>playerZ-0.5&&w.position.z<playerZ+1.5){
+      w.userData.passed=true;
+      if(checkHit(w)){
+        lives--;updateHUD();
+        scene.background.setHex(0xff2222);
+        setTimeout(()=>scene.background.setHex(0x87CEEB),150);
+        if(lives<=0){gameState='over';showEnd();return;}
+      }else{score+=10;updateHUD();}
+    }
+    // Remove far walls behind player & spawn new ones ahead
+    if(w.position.z>playerZ+20){scene.remove(w);walls.splice(i,1);
+      const farthest=walls.reduce((a,w)=>Math.min(a,w.position.z),playerZ);
+      walls.push(createWall(farthest-20));
+    }
+  }
+  // Speed up gradually
+  runSpeed=Math.min(30,runSpeed+0.3*dt);
+  renderer.render(scene,camera);
+}
 animate();
 </script>
 </body></html>
