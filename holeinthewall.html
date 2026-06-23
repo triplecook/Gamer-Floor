@@ -4,6 +4,10 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:#000;overflow:hidden;font-family:monospace;}
 #hud{position:fixed;top:15px;left:50%;transform:translateX(-50%);color:#fff;font-size:16px;text-align:center;z-index:100;text-shadow:0 0 8px #0ff;pointer-events:none;}
+#crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100;pointer-events:none;}
+#crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(255,255,255,0.7);}
+#crosshair::before{width:16px;height:2px;top:-1px;left:-8px;}
+#crosshair::after{width:2px;height:16px;top:-8px;left:-1px;}
 #controls{position:fixed;top:60px;left:15px;z-index:100;pointer-events:none;font-size:11px;}
 .key-row{display:flex;gap:3px;margin:2px 0;justify-content:center;}
 .key{background:#222;border:1px solid #555;border-radius:4px;padding:4px 8px;color:#888;min-width:28px;text-align:center;transition:all 0.1s;}
@@ -24,6 +28,7 @@ body{background:#000;overflow:hidden;font-family:monospace;}
 <a class="back" href="index.html">← Back</a>
 <button class="mute-btn" onclick="musicMuted=!musicMuted;this.textContent=musicMuted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
 <div id="hud">Score: 0 | ♥♥♥</div>
+<div id="crosshair"></div>
 <div id="controls">
   <div class="key-row"><div class="key" id="k-w">W</div></div>
   <div class="key-row"><div class="key" id="k-a">A</div><div class="key" id="k-s">S</div><div class="key" id="k-d">D</div></div>
@@ -104,13 +109,14 @@ const blockGeo=new THREE.BoxGeometry(BLK,BLK,BLK);
 
 let gameState='menu',score=0,lives=3,walls=[],yaw=0;
 let playerZ=0,playerX=0,playerY=0,velY=0,runSpeed=18;
-let diving=false,diveTimer=0,lastSpaceTime=0;
+let diving=false,diveTimer=0,lastSpaceTime=0,spaceCount=0;
 const keys={};
 document.addEventListener('keydown',e=>{
   keys[e.key.toLowerCase()]=true;
   if(e.key===' '){e.preventDefault();
     const now=performance.now();
-    if(now-lastSpaceTime<300&&!diving&&playerY===0){diving=true;diveTimer=0.5;}
+    if(now-lastSpaceTime<500){spaceCount++;}else{spaceCount=1;}
+    if(spaceCount>=2&&!diving){diving=true;diveTimer=0.6;spaceCount=0;}
     lastSpaceTime=now;
   }
 });
@@ -143,24 +149,20 @@ function createWall(z){
         const block=new THREE.Mesh(blockGeo,mat);
         block.position.set((x-GRID_W/2+0.5)*BLK,y*BLK+BLK/2,0);
         group.add(block);
-        // Crack lines on cracked walls
+        // Crack/rip lines on breakable walls
         if(isCracked){
-          const crack=new THREE.Mesh(new THREE.PlaneGeometry(BLK*0.8,BLK*0.8),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.3}));
-          crack.position.set((x-GRID_W/2+0.5)*BLK,y*BLK+BLK/2,BLK/2+0.01);
-          group.add(crack);
+          const crackMat=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.6});
+          // Diagonal rip
+          const rip1=new THREE.Mesh(new THREE.PlaneGeometry(BLK*0.7,BLK*0.08),crackMat);
+          rip1.position.set((x-GRID_W/2+0.5)*BLK,y*BLK+BLK/2,BLK/2+0.02);rip1.rotation.z=0.7;group.add(rip1);
+          const rip2=new THREE.Mesh(new THREE.PlaneGeometry(BLK*0.5,BLK*0.06),crackMat);
+          rip2.position.set((x-GRID_W/2+0.5)*BLK+0.2,y*BLK+BLK/2-0.3,BLK/2+0.02);rip2.rotation.z=-0.4;group.add(rip2);
+          const rip3=new THREE.Mesh(new THREE.PlaneGeometry(BLK*0.3,BLK*0.05),crackMat);
+          rip3.position.set((x-GRID_W/2+0.5)*BLK-0.3,y*BLK+BLK/2+0.2,BLK/2+0.02);rip3.rotation.z=1.2;group.add(rip3);
         }
       }
     }
   }
-  // Glow border on gap edges
-  const edgeMat=new THREE.MeshBasicMaterial({color:isCracked?0xff8800:0x00ff88,transparent:true,opacity:0.2});
-  for(let dx=0;dx<4;dx++){for(let dy=0;dy<4;dy++){
-    const gx=gapX+dx,gy=gapY+dy;
-    if(dx===0||dx===3||dy===0||dy===3){
-      const edge=new THREE.Mesh(new THREE.BoxGeometry(BLK+0.1,BLK+0.1,0.1),edgeMat);
-      edge.position.set((gx-GRID_W/2+0.5)*BLK,gy*BLK+BLK/2,BLK/2+0.05);group.add(edge);
-    }
-  }}
   group.position.z=z;
   group.userData={gapX,gapY,passed:false,cracked:isCracked};
   scene.add(group);return group;
