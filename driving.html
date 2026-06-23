@@ -20,9 +20,9 @@ canvas { border: 2px solid #333; }
 firebase.initializeApp({apiKey:"AIzaSyD6brDwqXf-WeldlapwZLbAyNe7-1yUT3M",authDomain:"gamer-floor.firebaseapp.com",databaseURL:"https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"gamer-floor",storageBucket:"gamer-floor.firebasestorage.app",messagingSenderId:"721194925615",appId:"1:721194925615:web:9366ce5acc997c85e990da"});
 const db=firebase.database();
 let globalLB=[];
-function submitDrivingScore(diff,time){return db.ref('driving_'+diff).push({time,ts:Date.now()});}
+function submitDrivingScore(diff,time){return db.ref('driving/'+diff).push({time,ts:Date.now()});}
 function loadDrivingLB(diff,cb){
-  fetch('https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app/driving_'+diff+'.json')
+  fetch('https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app/driving/'+diff+'.json')
     .then(r=>r.json()).then(data=>{
       if(!data){cb([]);return;}
       const s=Object.values(data).map(e=>e.time).sort((a,b)=>b-a);
