@@ -35,7 +35,7 @@ body{background:#000;overflow:hidden;font-family:monospace;}
   <div class="key-row"><div class="key wide" id="k-space">SPACE</div></div>
   <div class="key-label" id="action-label">—</div>
 </div>
-<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Run forward and dodge through gaps in the walls!<br><br>A/D — Strafe left/right<br>W/S — Speed up/slow down<br>Space — Jump<br>Double-tap Space — Dive forward (breaks cracked blocks!)<br>Mouse — Look left/right</p><button onclick="startGame()">START</button></div>
+<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Run forward and dodge through gaps in the walls!<br>Speed increases over time — how far can you go?<br><br>A/D — Strafe left/right<br>Space — Jump<br>Double-tap Space — Dive (breaks cracked 2x2 blocks!)<br>Mouse — Look left/right</p><button onclick="startGame()">START</button></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 let musicMuted=false;
@@ -134,25 +134,32 @@ const GRID_W=9,GRID_H=5;
 function createWall(z){
   const group=new THREE.Group();
   const baseColor=CONCRETE[Math.floor(Math.random()*CONCRETE.length)];
-  const isCracked=Math.random()<0.25;
   const gapX=Math.floor(Math.random()*(GRID_W-3));
   const gapY=Math.floor(Math.random()*(GRID_H-3));
   const gap=new Set();
   for(let dx=0;dx<4;dx++)for(let dy=0;dy<4;dy++)gap.add((gapX+dx)+','+(gapY+dy));
+  // Cracked 2x2 patch (not in gap, random position)
+  let crackX=-1,crackY=-1;
+  if(Math.random()<0.3){
+    for(let tries=0;tries<10;tries++){
+      const cx=Math.floor(Math.random()*(GRID_W-1)),cy=Math.floor(Math.random()*(GRID_H-1));
+      if(!gap.has(cx+','+cy)&&!gap.has((cx+1)+','+cy)&&!gap.has(cx+','+(cy+1))&&!gap.has((cx+1)+','+(cy+1))){crackX=cx;crackY=cy;break;}
+    }
+  }
+  const crackSet=new Set();
+  if(crackX>=0){for(let dx=0;dx<2;dx++)for(let dy=0;dy<2;dy++)crackSet.add((crackX+dx)+','+(crackY+dy));}
   for(let x=0;x<GRID_W;x++){
     for(let y=0;y<GRID_H;y++){
       if(!gap.has(x+','+y)){
         const mat=new THREE.MeshLambertMaterial({color:baseColor});
-        // Add detail: edge darkening per block
         const shade=(Math.sin(x*2.1)+Math.cos(y*3.7))*0.05;
         mat.color.offsetHSL(0,0,shade);
         const block=new THREE.Mesh(blockGeo,mat);
         block.position.set((x-GRID_W/2+0.5)*BLK,y*BLK+BLK/2,0);
         group.add(block);
-        // Crack/rip lines on breakable walls
-        if(isCracked){
+        // Crack rips only on cracked 2x2 patch
+        if(crackSet.has(x+','+y)){
           const crackMat=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.6});
-          // Diagonal rip
           const rip1=new THREE.Mesh(new THREE.PlaneGeometry(BLK*0.7,BLK*0.08),crackMat);
           rip1.position.set((x-GRID_W/2+0.5)*BLK,y*BLK+BLK/2,BLK/2+0.02);rip1.rotation.z=0.7;group.add(rip1);
           const rip2=new THREE.Mesh(new THREE.PlaneGeometry(BLK*0.5,BLK*0.06),crackMat);
@@ -164,7 +171,7 @@ function createWall(z){
     }
   }
   group.position.z=z;
-  group.userData={gapX,gapY,passed:false,cracked:isCracked};
+  group.userData={gapX,gapY,passed:false,crackX,crackY,crackSet};
   scene.add(group);return group;
 }
 
@@ -174,12 +181,19 @@ function checkHit(wall){
   const py=Math.round(playerY/BLK);
   for(let dy=0;dy<2;dy++){
     const isGap=(px>=w.gapX&&px<w.gapX+4&&(py+dy)>=w.gapY&&(py+dy)<w.gapY+4);
-    if(!isGap&&px>=0&&px<GRID_W)return true;
+    const isCrack=w.crackSet&&w.crackSet.has(px+','+(py+dy));
+    if(!isGap&&px>=0&&px<GRID_W){
+      if(isCrack&&diving)return 'crack';
+      if(!isCrack||!diving)return 'hit';
+    }
   }
   return false;
 }
 
-function spawnWalls(){for(let i=0;i<6;i++)walls.push(createWall(playerZ-30-i*20));}
+function wallSpacing(){return Math.max(14,22-runSpeed*0.2);}
+function spawnWalls(){for(let i=0;i<6;i++)walls.push(createWall(playerZ-30-i*wallSpacing()));}
+
+let leaderboard=JSON.parse(localStorage.getItem('hitwLB')||'[]');
 
 function startGame(){
   document.getElementById('start-screen').style.display='none';
@@ -187,11 +201,18 @@ function startGame(){
   if(!audioCtx)initAudio();musicPlaying=true;lastBeat=audioCtx.currentTime;beatCount=0;
   gameState='playing';score=0;lives=3;yaw=0;
   walls.forEach(w=>scene.remove(w));walls=[];
-  playerZ=0;playerX=0;playerY=0;velY=0;runSpeed=18;diving=false;
+  playerZ=0;playerX=0;playerY=0;velY=0;runSpeed=14;diving=false;
   spawnWalls();updateHUD();
 }
 function updateHUD(){document.getElementById('hud').innerHTML='Score: '+score+' | '+'♥'.repeat(lives)+'♡'.repeat(3-lives);}
-function showEnd(){document.exitPointerLock();musicPlaying=false;const s=document.getElementById('start-screen');s.style.display='flex';s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><button onclick="startGame()">PLAY AGAIN</button>';}
+function showEnd(){
+  document.exitPointerLock();musicPlaying=false;
+  leaderboard.push(score);leaderboard.sort((a,b)=>b-a);leaderboard=leaderboard.slice(0,5);
+  localStorage.setItem('hitwLB',JSON.stringify(leaderboard));
+  const lbHtml=leaderboard.map((s,i)=>'<span style="color:'+(i===0?'#ff0':'#aaa')+'">'+(i+1)+'. '+s+'</span>').join('<br>');
+  const s=document.getElementById('start-screen');s.style.display='flex';
+  s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><h3 style="color:#0ff;margin:10px 0">LEADERBOARD</h3><p>'+lbHtml+'</p><button onclick="startGame()">PLAY AGAIN</button>';
+}
 
 function updateControls(){
   const setKey=(id,active)=>{const el=document.getElementById(id);if(el)el.className=active?'key active':'key';};
@@ -203,8 +224,6 @@ function updateControls(){
   const label=document.getElementById('action-label');
   if(diving)label.textContent='⚡ DIVING';
   else if(keys[' '])label.textContent='↑ Jumping';
-  else if(keys['w']||keys['arrowup'])label.textContent='▶ Speed Up';
-  else if(keys['s']||keys['arrowdown'])label.textContent='◀ Slow Down';
   else if(keys['a']||keys['arrowleft'])label.textContent='← Strafe Left';
   else if(keys['d']||keys['arrowright'])label.textContent='→ Strafe Right';
   else label.textContent='— Running';
@@ -218,14 +237,12 @@ function animate(){
   if(gameState!=='playing'){renderer.render(scene,camera);return;}
   updateControls();
 
-  // Movement
+  // Movement - auto speed, no W/S
   playerZ-=runSpeed*dt;
   const strafe=12*dt;
   if(keys['a']||keys['arrowleft'])playerX-=strafe;
   if(keys['d']||keys['arrowright'])playerX+=strafe;
   playerX=Math.max(-8,Math.min(8,playerX));
-  if(keys['w']||keys['arrowup'])runSpeed=Math.min(35,runSpeed+10*dt);
-  if(keys['s']||keys['arrowdown'])runSpeed=Math.max(8,runSpeed-10*dt);
   // Jump
   if(keys[' ']&&playerY===0&&!diving)velY=12;
   velY-=30*dt;playerY+=velY*dt;
@@ -249,26 +266,24 @@ function animate(){
     const w=walls[i];
     if(!w.userData.passed&&w.position.z>playerZ-1&&w.position.z<playerZ+2){
       w.userData.passed=true;
-      const hit=checkHit(w);
-      if(hit){
-        if(diving&&w.userData.cracked){
-          // Break through!
-          score+=25;
-          w.children.forEach(c=>{c.material=new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0.5});});
-          setTimeout(()=>scene.remove(w),300);
-        }else{
-          lives--;scene.background.setHex(0xff1111);setTimeout(()=>scene.background.setHex(0x1a1a2e),200);
-          if(lives<=0){gameState='over';showEnd();return;}
-        }
+      const result=checkHit(w);
+      if(result==='crack'){
+        score+=25;
+        w.children.forEach(c=>{if(c.material)c.material=new THREE.MeshBasicMaterial({color:0xff8800,transparent:true,opacity:0.5});});
+        setTimeout(()=>scene.remove(w),300);
+      }else if(result==='hit'){
+        lives--;scene.background.setHex(0xff1111);setTimeout(()=>scene.background.setHex(0x1a1a2e),200);
+        if(lives<=0){gameState='over';showEnd();return;}
       }else{score+=10;}
       updateHUD();
     }
     if(w.position.z>playerZ+25){scene.remove(w);walls.splice(i,1);
       const far=walls.reduce((a,ww)=>Math.min(a,ww.position.z),playerZ);
-      walls.push(createWall(far-20));
+      walls.push(createWall(far-wallSpacing()));
     }
   }
-  runSpeed=Math.min(35,runSpeed+0.2*dt);
+  // Progressive speed (capped at 30)
+  runSpeed=Math.min(30,runSpeed+0.15*dt);
   renderer.render(scene,camera);
 }
 animate();
