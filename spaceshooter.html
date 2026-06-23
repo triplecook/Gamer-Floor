@@ -346,8 +346,8 @@ function draw() {
   ctx.fillText('LEVEL: ' + level, 10, 45);
   // Mute button
   ctx.fillStyle = '#333'; ctx.strokeStyle = '#888'; ctx.lineWidth = 2;
-  ctx.fillRect(610, 470, 80, 24); ctx.strokeRect(610, 470, 80, 24);
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 12px monospace'; ctx.fillText(musicMuted ? '🔇 Mute' : '🔊 Music', 617, 486);
+  ctx.fillRect(610, 6, 80, 24); ctx.strokeRect(610, 6, 80, 24);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 12px monospace'; ctx.fillText(musicMuted ? '🔇 Mute' : '🔊 Music', 617, 22);
   // Lives
   for (let i = 0; i < lives; i++) {
     ctx.fillStyle = '#f44'; ctx.beginPath();
@@ -387,7 +387,7 @@ canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
   // Mute button area: top-right corner
-  if (mx >= 610 && mx <= 690 && my >= 470 && my <= 494) {
+  if (mx >= 610 && mx <= 690 && my >= 6 && my <= 30) {
     const m = document.getElementById('music');
     musicMuted = !musicMuted; m.muted = musicMuted; return;
   }
