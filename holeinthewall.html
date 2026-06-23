@@ -49,7 +49,7 @@ firebase.initializeApp({
   appId:"1:721194925615:web:9366ce5acc997c85e990da"
 });
 const db=firebase.database();
-function submitScore(name,score){db.ref('holeinthewall').push({name,score,time:Date.now()});}
+function submitScore(name,score){return db.ref('holeinthewall').push({name,score,time:Date.now()});}
 function getLeaderboard(cb){db.ref('holeinthewall').once('value',snap=>{const scores=[];snap.forEach(s=>scores.push(s.val()));scores.sort((a,b)=>b.score-a.score);cb(scores.slice(0,10));});}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -226,12 +226,13 @@ function showEnd(){
 }
 function submitAndShow(){
   const name=(document.getElementById('pname').value||'Anon').trim().slice(0,12);
-  submitScore(name,score);
-  const s=document.getElementById('start-screen');
-  s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><h3 style="color:#0ff;margin:10px 0">🌐 GLOBAL LEADERBOARD</h3><p id="lb-list">Loading...</p><button onclick="startGame()" style="margin-top:16px">PLAY AGAIN</button>';
-  getLeaderboard(scores=>{
-    const html=scores.map((e,i)=>'<span style="color:'+(i===0?'#ff0':i<3?'#0ff':'#aaa')+'">'+(i+1)+'. '+e.name+' — '+e.score+'</span>').join('<br>');
-    document.getElementById('lb-list').innerHTML=html||'No scores yet';
+  submitScore(name,score).then(()=>{
+    const s=document.getElementById('start-screen');
+    s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><h3 style="color:#0ff;margin:10px 0">🌐 GLOBAL LEADERBOARD</h3><p id="lb-list">Loading...</p><button onclick="startGame()" style="margin-top:16px">PLAY AGAIN</button>';
+    getLeaderboard(scores=>{
+      const html=scores.map((e,i)=>'<span style="color:'+(i===0?'#ff0':i<3?'#0ff':'#aaa')+'">'+(i+1)+'. '+e.name+' — '+e.score+'</span>').join('<br>');
+      document.getElementById('lb-list').innerHTML=html||'No scores yet';
+    });
   });
 }
 

@@ -20,7 +20,7 @@ canvas { border: 2px solid #333; }
 firebase.initializeApp({apiKey:"AIzaSyD6brDwqXf-WeldlapwZLbAyNe7-1yUT3M",authDomain:"gamer-floor.firebaseapp.com",databaseURL:"https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"gamer-floor",storageBucket:"gamer-floor.firebasestorage.app",messagingSenderId:"721194925615",appId:"1:721194925615:web:9366ce5acc997c85e990da"});
 const db=firebase.database();
 let globalLB=[];
-function submitDrivingScore(diff,time){db.ref('driving_'+diff).push({time,ts:Date.now()});}
+function submitDrivingScore(diff,time){return db.ref('driving_'+diff).push({time,ts:Date.now()});}
 function loadDrivingLB(diff,cb){db.ref('driving_'+diff).once('value',snap=>{const s=[];snap.forEach(e=>s.push(e.val().time));s.sort((a,b)=>b-a);cb(s.slice(0,5));});}
 </script>
 <script>
@@ -107,8 +107,9 @@ function endGame() {
   leaderboard[difficulty].sort((a, b) => b - a);
   leaderboard[difficulty] = leaderboard[difficulty].slice(0, 5);
   localStorage.setItem('drivingLB2', JSON.stringify(leaderboard));
-  submitDrivingScore(difficulty, score);
-  loadDrivingLB(difficulty, s => { globalLB = s; });
+  submitDrivingScore(difficulty, score).then(()=>{
+    loadDrivingLB(difficulty, s => { globalLB = s; });
+  });
 }
 
 function update() {
