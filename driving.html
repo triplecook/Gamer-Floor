@@ -14,7 +14,7 @@ canvas { border: 2px solid #333; }
 <button class="mute-btn" onclick="const m=document.getElementById('music');m.muted=!m.muted;this.textContent=m.muted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
 <audio id="music" src="music-driving.mp3" loop></audio>
 <canvas id="game" width="560" height="700"></canvas>
-<div id="name-input" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;text-align:center;">
+<div id="name-input" style="display:none;position:fixed;top:75%;left:50%;transform:translate(-50%,-50%);z-index:1000;text-align:center;">
 <input id="pname" placeholder="Your name" maxlength="12" style="padding:8px 16px;font-size:14px;font-family:monospace;border:2px solid #0ff;background:#111;color:#fff;border-radius:6px;width:180px;text-align:center;">
 <button onclick="submitName()" style="padding:8px 16px;font-size:14px;font-family:monospace;background:#0ff;color:#000;border:none;border-radius:6px;cursor:pointer;margin-left:6px;">Submit</button>
 </div>
