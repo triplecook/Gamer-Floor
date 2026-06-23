@@ -28,13 +28,13 @@ const DIFFICULTIES = {
   impossible: { baseSpeed: 5.5, accel: 0.2, spawnBase: 25, spawnMin: 8, carH: 85, truckH: 220, invisWalls: true, sneakyTurners: true, trafficLights: true }
 };
 
-let player, obstacles, timer, gameState, speed, spawnTimer, leaderboard, flashFrame, difficulty, diff;
+let player, obstacles, timer, gameState, speed, spawnTimer, leaderboard, flashFrame, difficulty, diff, speedBonus;
 let trafficLights = [];
 
 function init(d) {
   difficulty = d; diff = DIFFICULTIES[d];
   player = { lane: 3, y: 600, w: 40, h: 72, x: LANE_CENTER(3) };
-  obstacles = []; trafficLights = []; timer = 0; speed = diff.baseSpeed; spawnTimer = 0; flashFrame = 0;
+  obstacles = []; trafficLights = []; timer = 0; speed = diff.baseSpeed; spawnTimer = 0; flashFrame = 0; speedBonus = 0;
   gameState = 'playing';
 }
 
@@ -73,7 +73,7 @@ function spawnObstacle() {
     for (let c = 0; c < count; c++)
       obstacles.push({ lane, x: LANE_CENTER(lane), y: -30 - c * 40, w: 14, h: 20, type: 'cone' });
   } else if (diff.invisWalls && type < 0.12) {
-    obstacles.push({ lane, x: LANE_CENTER(lane), y: -60, w: LANE_W - 10, h: 20, type: 'wall', phase: 'flash', flashTimer: 40 });
+    obstacles.push({ lane, x: LANE_CENTER(lane), y: -60, w: LANE_W - 10, h: 20, type: 'wall', phase: 'flash', flashTimer: 15 });
   } else if (type < 0.2) {
     const sneaky = diff.sneakyTurners && Math.random() < 0.4;
     const dir = lane === 0 ? 1 : lane === LANES - 1 ? -1 : (Math.random() < 0.5 ? -1 : 1);
@@ -108,7 +108,7 @@ function endGame() {
 function update() {
   if (gameState !== 'playing') return;
   timer += 1 / 60;
-  speed = diff.baseSpeed + timer * diff.accel;
+  speed = diff.baseSpeed + timer * diff.accel + speedBonus;
   flashFrame++;
 
   if (timer >= 60) { gameState = 'win'; return; }
@@ -126,8 +126,8 @@ function update() {
     t.y += speed;
     if (t.y > 780) { trafficLights.splice(i, 1); continue; }
     if (Math.abs(t.x - player.x) < 30 && Math.abs(t.y - player.y) < 30) {
-      if (t.isRed) { speed += 20/20; } // +20km/h (speed units)
-      else { speed = Math.max(1, speed - 5/20); } // -5km/h
+      if (t.isRed) { speedBonus += 1; } // +20km/h
+      else { speedBonus = Math.max(-diff.baseSpeed+1, speedBonus - 0.25); } // -5km/h
       trafficLights.splice(i, 1);
     }
   }
@@ -256,10 +256,9 @@ function draw() {
       ctx.restore();
     } else if (o.type === 'wall') {
       if (o.phase === 'flash') {
-        const alpha = (Math.sin(o.flashTimer * 0.5) * 0.5 + 0.5) * 0.7;
-        ctx.fillStyle = 'rgba(255,50,50,' + alpha + ')';
+        ctx.fillStyle = 'rgba(255,50,50,0.8)';
         ctx.fillRect(o.x - o.w/2, o.y - o.h/2, o.w, o.h);
-        ctx.strokeStyle = 'rgba(255,100,100,' + alpha + ')'; ctx.lineWidth = 2;
+        ctx.strokeStyle = '#f66'; ctx.lineWidth = 2;
         ctx.strokeRect(o.x - o.w/2, o.y - o.h/2, o.w, o.h);
       } else if (o.phase === 'revealed') {
         ctx.fillStyle = 'rgba(255,50,50,0.8)';
