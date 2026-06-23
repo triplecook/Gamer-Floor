@@ -36,6 +36,22 @@ body{background:#000;overflow:hidden;font-family:monospace;}
   <div class="key-label" id="action-label">—</div>
 </div>
 <div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Run forward and dodge through gaps in the walls!<br>Speed increases over time — how far can you go?<br><br>A/D — Strafe left/right<br>Space — Jump<br>Double-tap Space — Dive (breaks cracked 2x2 blocks!)<br>Mouse — Look left/right</p><button onclick="startGame()">START</button></div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyD6brDwqXf-WeldlapwZLbAyNe7-1yUT3M",
+  authDomain:"gamer-floor.firebaseapp.com",
+  databaseURL:"https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"gamer-floor",
+  storageBucket:"gamer-floor.firebasestorage.app",
+  messagingSenderId:"721194925615",
+  appId:"1:721194925615:web:9366ce5acc997c85e990da"
+});
+const db=firebase.database();
+function submitScore(name,score){db.ref('leaderboard').push({name,score,time:Date.now()});}
+function getLeaderboard(cb){db.ref('leaderboard').orderByChild('score').limitToLast(10).once('value',snap=>{const scores=[];snap.forEach(s=>scores.push(s.val()));scores.reverse();cb(scores);});}
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 let musicMuted=false;
@@ -193,8 +209,6 @@ function checkHit(wall){
 function wallSpacing(){return Math.max(14,22-runSpeed*0.2);}
 function spawnWalls(){for(let i=0;i<6;i++)walls.push(createWall(playerZ-30-i*wallSpacing()));}
 
-let leaderboard=JSON.parse(localStorage.getItem('hitwLB')||'[]');
-
 function startGame(){
   document.getElementById('start-screen').style.display='none';
   renderer.domElement.requestPointerLock();
@@ -207,11 +221,18 @@ function startGame(){
 function updateHUD(){document.getElementById('hud').innerHTML='Score: '+score+' | '+'♥'.repeat(lives)+'♡'.repeat(3-lives);}
 function showEnd(){
   document.exitPointerLock();musicPlaying=false;
-  leaderboard.push(score);leaderboard.sort((a,b)=>b-a);leaderboard=leaderboard.slice(0,5);
-  localStorage.setItem('hitwLB',JSON.stringify(leaderboard));
-  const lbHtml=leaderboard.map((s,i)=>'<span style="color:'+(i===0?'#ff0':'#aaa')+'">'+(i+1)+'. '+s+'</span>').join('<br>');
   const s=document.getElementById('start-screen');s.style.display='flex';
-  s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><h3 style="color:#0ff;margin:10px 0">LEADERBOARD</h3><p>'+lbHtml+'</p><button onclick="startGame()">PLAY AGAIN</button>';
+  s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><input id="pname" placeholder="Your name" maxlength="12" style="padding:8px 16px;font-size:14px;font-family:monospace;border:2px solid #0ff;background:#111;color:#fff;border-radius:6px;margin:10px;width:200px;text-align:center"><button onclick="submitAndShow()">SUBMIT SCORE</button>';
+}
+function submitAndShow(){
+  const name=(document.getElementById('pname').value||'Anon').trim().slice(0,12);
+  submitScore(name,score);
+  const s=document.getElementById('start-screen');
+  s.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'</p><h3 style="color:#0ff;margin:10px 0">🌐 GLOBAL LEADERBOARD</h3><p id="lb-list">Loading...</p><button onclick="startGame()" style="margin-top:16px">PLAY AGAIN</button>';
+  getLeaderboard(scores=>{
+    const html=scores.map((e,i)=>'<span style="color:'+(i===0?'#ff0':i<3?'#0ff':'#aaa')+'">'+(i+1)+'. '+e.name+' — '+e.score+'</span>').join('<br>');
+    document.getElementById('lb-list').innerHTML=html||'No scores yet';
+  });
 }
 
 function updateControls(){
