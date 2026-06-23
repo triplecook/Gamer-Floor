@@ -19,6 +19,7 @@ h1 { font-size: 3rem; margin-bottom: 8px; background: linear-gradient(135deg, #f
 .card.racing { border-color: #f39c12; } .card.racing:hover { box-shadow: 0 12px 40px rgba(243,156,18,0.25); }
 .card.shooter { border-color: #0af; } .card.shooter:hover { box-shadow: 0 12px 40px rgba(0,170,255,0.25); }
 .card.fighter { border-color: #e74c3c; } .card.fighter:hover { box-shadow: 0 12px 40px rgba(231,76,60,0.25); }
+.card.td { border-color: #2ecc71; } .card.td:hover { box-shadow: 0 12px 40px rgba(46,204,113,0.25); }
 .card-icon { font-size: 2.5rem; margin-bottom: 12px; }
 .card h2 { font-size: 1.3rem; margin-bottom: 8px; }
 .card p { color: #999; font-size: 0.85rem; line-height: 1.5; }
@@ -26,6 +27,7 @@ h1 { font-size: 3rem; margin-bottom: 8px; background: linear-gradient(135deg, #f
 .card.racing .tag { background: rgba(243,156,18,0.15); color: #f39c12; }
 .card.shooter .tag { background: rgba(0,170,255,0.15); color: #0af; }
 .card.fighter .tag { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.card.td .tag { background: rgba(46,204,113,0.15); color: #2ecc71; }
 footer { margin-top: 50px; color: #555; font-size: 0.8rem; }
 .mute-btn { position: fixed; bottom: 20px; right: 20px; background: rgba(20,20,45,0.85); border: 1px solid #555; color: #fff; padding: 10px 16px; border-radius: 10px; font-family: monospace; font-size: 0.9rem; cursor: pointer; z-index: 999; backdrop-filter: blur(8px); }
 .mute-btn:hover { background: rgba(50,50,80,0.9); border-color: #888; }
@@ -37,7 +39,7 @@ footer { margin-top: 50px; color: #555; font-size: 0.8rem; }
 <div class="content">
 <h1>🎮 Game Arcade</h1>
 <p class="sub">Welcome! Pick a game and have fun</p>
-<div class="emoji-row">🕹️ 🚗 🚀 🥊</div>
+<div class="emoji-row">🕹️ 🚗 🚀 🥊 🏰</div>
 <div class="games">
   <a class="card racing" href="driving.html">
     <div class="card-icon">🚗</div>
@@ -56,6 +58,12 @@ footer { margin-top: 50px; color: #555; font-size: 0.8rem; }
     <h2>Street Fighter</h2>
     <p>Local 2-player fighting game with combos, power-ups, and special moves.</p>
     <span class="tag">Fighting</span>
+  </a>
+  <a class="card td" href="towerdefense.html">
+    <div class="card-icon">🏰</div>
+    <h2>Tower Defense</h2>
+    <p>Place and upgrade turrets to stop waves of enemies. Three tower types with unique abilities.</p>
+    <span class="tag">Strategy</span>
   </a>
 </div>
 <footer>Built with ❤️</footer>
