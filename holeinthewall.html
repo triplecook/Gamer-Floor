@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html><head><title>Hole in the Wall</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;overflow:hidden;font-family:monospace;}
+canvas{display:block;}
+.back{position:fixed;top:15px;left:15px;background:#222;color:#fff;border:1px solid #555;padding:8px 16px;border-radius:6px;font-family:monospace;cursor:pointer;text-decoration:none;z-index:999;}
+.back:hover{background:#444;}
+.mute-btn{position:fixed;top:15px;right:15px;background:#222;color:#fff;border:1px solid #555;padding:8px 16px;border-radius:6px;font-family:monospace;cursor:pointer;z-index:9999;}
+.mute-btn:hover{background:#444;}
+#hud{position:fixed;top:50px;left:50%;transform:translateX(-50%);color:#fff;font-size:18px;text-align:center;z-index:100;text-shadow:0 0 10px #0ff;}
+#start-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;color:#fff;}
+#start-screen h1{font-size:3rem;background:linear-gradient(135deg,#0ff,#f0f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px;}
+#start-screen p{color:#aaa;margin-bottom:30px;font-size:14px;max-width:400px;text-align:center;line-height:1.6;}
+#start-screen button{background:#222;color:#0ff;border:2px solid #0ff;padding:12px 32px;font-size:16px;font-family:monospace;cursor:pointer;border-radius:8px;}
+#start-screen button:hover{background:#0ff;color:#000;}
+</style>
+</head><body>
+<a class="back" href="index.html">← Back</a>
+<button class="mute-btn" onclick="musicMuted=!musicMuted;this.textContent=musicMuted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
+<div id="hud">Score: 0 | Combo: 0x</div>
+<div id="start-screen"><h1>🧱 HOLE IN THE WALL</h1><p>Move your character to fit through the holes in approaching walls!<br><br>WASD/Arrows to move • Space to duck<br>Walls sync to the beat — feel the rhythm!</p><button onclick="startGame()">START</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+let musicMuted=false;
+// Audio context & music
+let audioCtx,musicPlaying=false,bpm=130,beatInterval,lastBeat=0,beatCount=0;
+function initAudio(){
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  beatInterval=60/bpm;
+}
+function playNote(freq,time,dur,type='square',vol=0.12){
+  if(musicMuted)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(vol,time);g.gain.exponentialRampToValueAtTime(0.001,time+dur);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(time);o.stop(time+dur);
+}
+function playBeat(time,beat){
+  // Bass drum
+  const kick=audioCtx.createOscillator(),kg=audioCtx.createGain();
+  kick.type='sine';kick.frequency.setValueAtTime(150,time);kick.frequency.exponentialRampToValueAtTime(30,time+0.1);
+  kg.gain.setValueAtTime(musicMuted?0:0.4,time);kg.gain.exponentialRampToValueAtTime(0.001,time+0.15);
+  kick.connect(kg);kg.connect(audioCtx.destination);kick.start(time);kick.stop(time+0.2);
+  // Hi-hat on off-beats
+  if(beat%2===1){
+    const n=audioCtx.createBufferSource(),buf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.05,audioCtx.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.3;
+    n.buffer=buf;const ng=audioCtx.createGain();ng.gain.setValueAtTime(musicMuted?0:0.15,time);ng.gain.exponentialRampToValueAtTime(0.001,time+0.05);
+    n.connect(ng);ng.connect(audioCtx.destination);n.start(time);
+  }
+  // Melody
+  const melody=[262,294,330,392,440,392,330,294,349,392,440,523,494,440,392,330];
+  const note=melody[beat%melody.length];
+  playNote(note,time,beatInterval*0.6,'sawtooth',0.06);
+  // Bass line
+  const bass=[65,65,87,87,73,73,98,98];
+  playNote(bass[beat%bass.length],time,beatInterval*0.8,'triangle',0.15);
+}
+function scheduleBeat(){
+  if(!musicPlaying)return;
+  const now=audioCtx.currentTime;
+  while(lastBeat<now+0.2){
+    playBeat(lastBeat,beatCount);
+    lastBeat+=beatInterval;beatCount++;
+  }
+}
+
+// Three.js setup
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x111122);
+scene.fog=new THREE.Fog(0x111122,20,60);
+const camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,0.1,100);
+camera.position.set(0,3,12);camera.lookAt(0,2,0);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x404060));
+const dirLight=new THREE.DirectionalLight(0xffffff,0.8);dirLight.position.set(5,10,5);scene.add(dirLight);
+const pointLight=new THREE.PointLight(0x00ffff,0.5,20);pointLight.position.set(0,5,10);scene.add(pointLight);
+
+// Voxel materials (Minecraft-style)
+const blockMats={
+  stone:new THREE.MeshLambertMaterial({color:0x888888}),
+  dirt:new THREE.MeshLambertMaterial({color:0x8B5E3C}),
+  grass:new THREE.MeshLambertMaterial({color:0x4CAF50}),
+  gold:new THREE.MeshLambertMaterial({color:0xFFD700}),
+  diamond:new THREE.MeshLambertMaterial({color:0x00BCD4}),
+  obsidian:new THREE.MeshLambertMaterial({color:0x1a0a2a}),
+  lava:new THREE.MeshLambertMaterial({color:0xFF5722,emissive:0x441100}),
+  ice:new THREE.MeshLambertMaterial({color:0x88DDFF,transparent:true,opacity:0.8})
+};
+const wallMats=[blockMats.stone,blockMats.dirt,blockMats.obsidian,blockMats.lava,blockMats.ice,blockMats.gold];
+const blockGeo=new THREE.BoxGeometry(1,1,1);
+
+// Floor
+const floorGeo=new THREE.PlaneGeometry(20,80);
+const floorMat=new THREE.MeshLambertMaterial({color:0x2a5a2a});
+const floor=new THREE.Mesh(floorGeo,floorMat);
+floor.rotation.x=-Math.PI/2;floor.position.set(0,0,-20);
+scene.add(floor);
+// Grid lines on floor
+const gridHelper=new THREE.GridHelper(20,20,0x3a7a3a,0x1a4a1a);
+gridHelper.position.y=0.01;scene.add(gridHelper);
+
+// Player (voxel character)
+const playerGroup=new THREE.Group();
+const bodyMat=new THREE.MeshLambertMaterial({color:0x00aaff});
+const headMat=new THREE.MeshLambertMaterial({color:0xffcc88});
+const body=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.6),bodyMat);body.position.y=1.6;
+const head=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),headMat);head.position.y=2.55;
+const legL=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.4),new THREE.MeshLambertMaterial({color:0x333366}));legL.position.set(-0.2,0.4,0);
+const legR=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.8,0.4),new THREE.MeshLambertMaterial({color:0x333366}));legR.position.set(0.2,0.4,0);
+playerGroup.add(body,head,legL,legR);
+scene.add(playerGroup);
+
+// Game state
+let gameState='menu',score=0,combo=0,lives=3,walls=[],playerPos={x:0,y:0},playerDucking=false;
+const GRID_W=7,GRID_H=5; // wall grid size
+const keys={};
+document.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')e.preventDefault();});
+document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+function createWall(z){
+  const group=new THREE.Group();
+  const mat=wallMats[Math.floor(Math.random()*wallMats.length)];
+  // Generate hole pattern (random shape)
+  const hole=new Set();
+  const hx=Math.floor(Math.random()*(GRID_W-2))+1;
+  const hy=Math.floor(Math.random()*(GRID_H-2));
+  // Hole shapes
+  const shapes=[
+    [[0,0],[0,1],[0,2]],// vertical
+    [[0,0],[1,0],[2,0]],// horizontal
+    [[0,0],[1,0],[0,1],[1,1]],// square
+    [[0,0],[1,0],[1,1]],// L shape
+    [[0,0],[0,1],[1,1]],// reverse L
+    [[0,0],[1,0],[2,0],[1,1]],// T shape
+    [[0,0],[0,1],[0,2],[0,3]],// tall
+  ];
+  const shape=shapes[Math.floor(Math.random()*shapes.length)];
+  shape.forEach(([dx,dy])=>{
+    const gx=Math.min(GRID_W-1,hx+dx),gy=Math.min(GRID_H-1,hy+dy);
+    hole.add(gx+','+gy);
+  });
+  // Build wall blocks
+  for(let x=0;x<GRID_W;x++){
+    for(let y=0;y<GRID_H;y++){
+      if(!hole.has(x+','+y)){
+        const block=new THREE.Mesh(blockGeo,mat);
+        block.position.set(x-GRID_W/2+0.5,y+0.5,0);
+        group.add(block);
+      }
+    }
+  }
+  // Outline glow for hole
+  shape.forEach(([dx,dy])=>{
+    const gx=Math.min(GRID_W-1,hx+dx),gy=Math.min(GRID_H-1,hy+dy);
+    const glow=new THREE.Mesh(new THREE.BoxGeometry(1.05,1.05,0.1),new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.3}));
+    glow.position.set(gx-GRID_W/2+0.5,gy+0.5,0.5);
+    group.add(glow);
+  });
+  group.position.z=z;
+  group.userData={hole,passed:false,hx,hy,shape};
+  scene.add(group);
+  return group;
+}
+
+function checkCollision(wall){
+  const hole=wall.userData.hole;
+  // Player grid position
+  const px=Math.round(playerPos.x+GRID_W/2-0.5);
+  const py=playerDucking?0:Math.round(playerPos.y);
+  // Player occupies cells based on size
+  const playerCells=playerDucking?[[px,0],[px,1]]:[[px,py],[px,py+1],[px,py+2]];
+  for(const[cx,cy] of playerCells){
+    if(cx<0||cx>=GRID_W||cy<0||cy>=GRID_H)continue;
+    if(!hole.has(cx+','+cy))return true; // hit
+  }
+  return false;
+}
+
+function spawnWall(){
+  const w=createWall(-50);
+  walls.push(w);
+}
+
+let wallSpeed=12,lastWallSpawn=0,wallInterval=2;
+function startGame(){
+  document.getElementById('start-screen').style.display='none';
+  initAudio();musicPlaying=true;lastBeat=audioCtx.currentTime;beatCount=0;
+  gameState='playing';score=0;combo=0;lives=3;
+  walls.forEach(w=>scene.remove(w));walls=[];
+  playerPos={x:0,y:0};playerDucking=false;
+  wallSpeed=12;wallInterval=2;lastWallSpawn=-wallInterval;
+  for(let i=0;i<4;i++)spawnWall();
+  walls.forEach((w,i)=>w.position.z=-15-i*15);
+}
+
+let prevTime=performance.now();
+function animate(){
+  requestAnimationFrame(animate);
+  const now=performance.now(),dt=(now-prevTime)/1000;prevTime=now;
+  if(musicPlaying)scheduleBeat();
+  if(gameState!=='playing'){renderer.render(scene,camera);return;}
+
+  // Player movement
+  const moveSpeed=6*dt;
+  if(keys['a']||keys['arrowleft'])playerPos.x=Math.max(-GRID_W/2+1,playerPos.x-moveSpeed);
+  if(keys['d']||keys['arrowright'])playerPos.x=Math.min(GRID_W/2-1,playerPos.x+moveSpeed);
+  if(keys['w']||keys['arrowup'])playerPos.y=Math.min(GRID_H-3,playerPos.y+moveSpeed);
+  if(keys['s']||keys['arrowdown'])playerPos.y=Math.max(0,playerPos.y-moveSpeed);
+  playerDucking=keys[' '];
+
+  // Update player visual
+  playerGroup.position.set(playerPos.x,playerDucking?-0.5:playerPos.y,8);
+  playerGroup.scale.y=playerDucking?0.5:1;
+  // Bob animation
+  body.position.y=1.6+Math.sin(now*0.005)*0.05;
+
+  // Move walls
+  for(let i=walls.length-1;i>=0;i--){
+    const w=walls[i];
+    w.position.z+=wallSpeed*dt;
+    // Beat pulse - scale walls slightly on beat
+    const beatPhase=(audioCtx.currentTime%beatInterval)/beatInterval;
+    const pulse=1+Math.max(0,Math.sin(beatPhase*Math.PI*2))*0.02;
+    w.scale.set(pulse,pulse,1);
+    // Check pass
+    if(!w.userData.passed&&w.position.z>7.5&&w.position.z<9){
+      w.userData.passed=true;
+      if(checkCollision(w)){
+        combo=0;lives--;
+        pointLight.color.setHex(0xff0000);
+        if(lives<=0){gameState='over';musicPlaying=false;showGameOver();}
+      }else{
+        score+=10*(combo+1);combo++;
+        pointLight.color.setHex(0x00ff88);
+      }
+      updateHUD();
+    }
+    // Remove passed walls
+    if(w.position.z>15){scene.remove(w);walls.splice(i,1);spawnWall();}
+  }
+  // Light color fade back
+  pointLight.color.lerp(new THREE.Color(0x00ffff),dt*2);
+
+  // Speed up over time
+  wallSpeed=12+score*0.01;
+  wallInterval=Math.max(0.8,2-score*0.002);
+
+  // Camera shake on beat
+  const bp=(audioCtx.currentTime%beatInterval)/beatInterval;
+  camera.position.y=3+Math.sin(bp*Math.PI*2)*0.05;
+
+  renderer.render(scene,camera);
+}
+
+function updateHUD(){
+  document.getElementById('hud').innerHTML='Score: '+score+' | Combo: '+combo+'x | '+'♥'.repeat(lives);
+}
+
+function showGameOver(){
+  const ss=document.getElementById('start-screen');
+  ss.style.display='flex';
+  ss.innerHTML='<h1>GAME OVER</h1><p>Score: '+score+'<br>Best Combo: '+combo+'x</p><button onclick="startGame()">PLAY AGAIN</button>';
+}
+
+updateHUD();
+animate();
+</script>
+</body></html>
