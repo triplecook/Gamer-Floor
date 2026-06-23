@@ -22,10 +22,10 @@ const LANES = 6, LANE_W = 72, ROAD_X = (560 - LANES * LANE_W) / 2;
 const LANE_CENTER = i => ROAD_X + i * LANE_W + LANE_W / 2;
 
 const DIFFICULTIES = {
-  beginner: { baseSpeed: 2.5, accel: 0.05, spawnBase: 50, spawnMin: 25, carH: 68, truckH: 160, invisWalls: false, sneakyTurners: false, trafficLights: false },
-  intermediate: { baseSpeed: 3.5, accel: 0.1, spawnBase: 40, spawnMin: 18, carH: 74, truckH: 180, invisWalls: false, sneakyTurners: false, trafficLights: false },
-  hard: { baseSpeed: 4.5, accel: 0.15, spawnBase: 32, spawnMin: 12, carH: 80, truckH: 200, invisWalls: false, sneakyTurners: false, trafficLights: true },
-  impossible: { baseSpeed: 5.5, accel: 0.2, spawnBase: 25, spawnMin: 8, carH: 85, truckH: 220, invisWalls: true, sneakyTurners: true, trafficLights: true }
+  beginner: { baseSpeed: 3, accel: 0.06, spawnBase: 50, spawnMin: 25, carH: 68, truckH: 160, invisWalls: false, sneakyTurners: false, trafficLights: false },
+  intermediate: { baseSpeed: 4, accel: 0.12, spawnBase: 40, spawnMin: 18, carH: 74, truckH: 180, invisWalls: false, sneakyTurners: false, trafficLights: false },
+  hard: { baseSpeed: 5, accel: 0.18, spawnBase: 32, spawnMin: 12, carH: 80, truckH: 200, invisWalls: false, sneakyTurners: false, trafficLights: true },
+  impossible: { baseSpeed: 6, accel: 0.22, spawnBase: 25, spawnMin: 8, carH: 85, truckH: 220, invisWalls: true, sneakyTurners: true, trafficLights: true }
 };
 
 let player, obstacles, timer, gameState, speed, spawnTimer, leaderboard, flashFrame, difficulty, diff, speedBonus;
@@ -126,8 +126,8 @@ function update() {
     t.y += speed;
     if (t.y > 780) { trafficLights.splice(i, 1); continue; }
     if (Math.abs(t.x - player.x) < 30 && Math.abs(t.y - player.y) < 30) {
-      if (t.isRed) { speedBonus += 1; } // +20km/h
-      else { speedBonus = Math.max(-diff.baseSpeed+1, speedBonus - 0.25); } // -5km/h
+      if (t.isRed) { speedBonus += 1; }
+      else { speedBonus = Math.max(0, speedBonus - 0.25); }
       trafficLights.splice(i, 1);
     }
   }
