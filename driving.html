@@ -141,7 +141,7 @@ function update() {
   speed = diff.baseSpeed + timer * diff.accel + speedBonus;
   flashFrame++;
 
-  if (timer >= 60) { gameState = 'win'; return; }
+  if (timer >= 300) { gameState = 'win'; return; }
 
   const tx = LANE_CENTER(player.lane);
   player.x += (tx - player.x) * 0.2;
@@ -326,7 +326,7 @@ function draw() {
 
   // HUD
   ctx.fillStyle = '#fff'; ctx.font = '16px monospace'; ctx.textAlign = 'left';
-  ctx.fillText('Time: ' + (Math.floor(timer*10)/10).toFixed(1) + 's / 60s', 10, 25);
+  ctx.fillText('Time: ' + (Math.floor(timer*10)/10).toFixed(1) + 's / 300s', 10, 25);
   ctx.fillText('Speed: ' + Math.floor(speed*7) + ' km/h', 10, 48);
   ctx.fillStyle = '#ff0'; ctx.textAlign = 'right';
   ctx.fillText(difficulty.toUpperCase(), 550, 25);
@@ -334,7 +334,7 @@ function draw() {
 
   // Progress bar
   ctx.fillStyle = '#333'; ctx.fillRect(10, 60, 200, 8);
-  ctx.fillStyle = '#0f0'; ctx.fillRect(10, 60, Math.min(200, timer/60*200), 8);
+  ctx.fillStyle = '#0f0'; ctx.fillRect(10, 60, Math.min(200, timer/300*200), 8);
 
   if (gameState === 'over') {
     ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,150,560,400);
