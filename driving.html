@@ -22,10 +22,10 @@ const LANES = 6, LANE_W = 72, ROAD_X = (560 - LANES * LANE_W) / 2;
 const LANE_CENTER = i => ROAD_X + i * LANE_W + LANE_W / 2;
 
 const DIFFICULTIES = {
-  beginner: { baseSpeed: 4, accel: 0.08, spawnBase: 50, spawnMin: 25, carH: 68, truckH: 160, invisWalls: false, sneakyTurners: false, trafficLights: false },
-  intermediate: { baseSpeed: 5.5, accel: 0.14, spawnBase: 40, spawnMin: 18, carH: 74, truckH: 180, invisWalls: false, sneakyTurners: false, trafficLights: false },
-  hard: { baseSpeed: 7, accel: 0.2, spawnBase: 32, spawnMin: 12, carH: 80, truckH: 200, invisWalls: false, sneakyTurners: false, trafficLights: true },
-  impossible: { baseSpeed: 8.5, accel: 0.25, spawnBase: 25, spawnMin: 8, carH: 85, truckH: 220, invisWalls: true, sneakyTurners: true, trafficLights: true }
+  beginner: { baseSpeed: 8, accel: 0.16, spawnBase: 50, spawnMin: 25, carH: 68, truckH: 160, invisWalls: false, sneakyTurners: false, trafficLights: false },
+  intermediate: { baseSpeed: 11, accel: 0.28, spawnBase: 40, spawnMin: 18, carH: 74, truckH: 180, invisWalls: false, sneakyTurners: false, trafficLights: false },
+  hard: { baseSpeed: 14, accel: 0.4, spawnBase: 32, spawnMin: 12, carH: 80, truckH: 200, invisWalls: false, sneakyTurners: false, trafficLights: true },
+  impossible: { baseSpeed: 17, accel: 0.5, spawnBase: 25, spawnMin: 8, carH: 85, truckH: 220, invisWalls: true, sneakyTurners: true, trafficLights: true }
 };
 
 let player, obstacles, timer, gameState, speed, spawnTimer, leaderboard, flashFrame, difficulty, diff, speedBonus;
