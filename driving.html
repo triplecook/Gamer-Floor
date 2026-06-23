@@ -108,8 +108,9 @@ function endGame() {
   leaderboard[difficulty] = leaderboard[difficulty].slice(0, 5);
   localStorage.setItem('drivingLB2', JSON.stringify(leaderboard));
   submitDrivingScore(difficulty, score).then(()=>{
-    loadDrivingLB(difficulty, s => { globalLB = s; });
+    setTimeout(()=>loadDrivingLB(difficulty, s => { globalLB = s; }),500);
   });
+  loadDrivingLB(difficulty, s => { globalLB = s; });
 }
 
 function update() {
@@ -322,11 +323,12 @@ function draw() {
     ctx.fillStyle = '#fff'; ctx.font = '18px monospace';
     ctx.fillText('Survived: ' + (Math.floor(timer*10)/10).toFixed(1) + 's', 280, 260);
     ctx.fillText('[Enter] for menu', 280, 300);
-    const lb = globalLB.length ? globalLB : (leaderboard[difficulty] || []);
+    const lb = globalLB;
     ctx.fillStyle = '#ff0'; ctx.font = 'bold 18px monospace';
     ctx.fillText('🌐 GLOBAL BEST - ' + difficulty.toUpperCase(), 280, 340);
     ctx.fillStyle = '#fff'; ctx.font = '14px monospace';
-    lb.forEach((s,i) => ctx.fillText((i+1)+'. '+s.toFixed(1)+'s', 280, 365+i*22));
+    if(lb.length===0){ctx.fillText('Loading...', 280, 370);}
+    else{lb.forEach((s,i) => ctx.fillText((i+1)+'. '+s.toFixed(1)+'s', 280, 365+i*22));}
     ctx.textAlign = 'left';
   } else if (gameState === 'win') {
     ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,200,560,200);
