@@ -50,7 +50,14 @@ firebase.initializeApp({
 });
 const db=firebase.database();
 function submitScore(name,score){return db.ref('holeinthewall').push({name,score,time:Date.now()});}
-function getLeaderboard(cb){db.ref('holeinthewall').once('value',snap=>{const scores=[];snap.forEach(s=>scores.push(s.val()));scores.sort((a,b)=>b.score-a.score);cb(scores.slice(0,10));});}
+function getLeaderboard(cb){
+  fetch('https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app/holeinthewall.json')
+    .then(r=>r.json()).then(data=>{
+      if(!data){cb([]);return;}
+      const s=Object.values(data).sort((a,b)=>b.score-a.score);
+      cb(s.slice(0,10));
+    }).catch(()=>cb([]));
+}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -132,7 +139,7 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '){e.preventDefault();
     const now=performance.now();
     if(now-lastSpaceTime<500){spaceCount++;}else{spaceCount=1;}
-    if(spaceCount>=2&&!diving){diving=true;diveTimer=0.6;spaceCount=0;}
+    if(spaceCount>=2&&!diving){diving=true;diveTimer=0.35;spaceCount=0;}
     lastSpaceTime=now;
   }
 });
@@ -158,7 +165,7 @@ function createWall(z){
   let crackX=-1,crackY=-1;
   if(Math.random()<0.3){
     for(let tries=0;tries<10;tries++){
-      const cx=Math.floor(Math.random()*(GRID_W-1)),cy=Math.floor(Math.random()*(GRID_H-1));
+      const cx=Math.floor(Math.random()*(GRID_W-1)),cy=Math.floor(Math.random()*(GRID_H-3));
       if(!gap.has(cx+','+cy)&&!gap.has((cx+1)+','+cy)&&!gap.has(cx+','+(cy+1))&&!gap.has((cx+1)+','+(cy+1))){crackX=cx;crackY=cy;break;}
     }
   }
@@ -270,7 +277,7 @@ function animate(){
   velY-=30*dt;playerY+=velY*dt;
   if(playerY<=0){playerY=0;velY=0;}
   // Dive
-  if(diving){diveTimer-=dt;if(diveTimer<=0)diving=false;playerZ-=25*dt;}
+  if(diving){diveTimer-=dt;if(diveTimer<=0)diving=false;playerZ-=12*dt;}
 
   // Camera + arm
   camera.position.set(playerX,2.2+playerY,playerZ+2);
