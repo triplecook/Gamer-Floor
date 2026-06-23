@@ -156,8 +156,8 @@ function update() {
     t.y += speed;
     if (t.y > 780) { trafficLights.splice(i, 1); continue; }
     if (Math.abs(t.x - player.x) < 30 && Math.abs(t.y - player.y) < 30) {
-      if (t.isRed) { speedBonus += 2.86; }
-      else { speedBonus = Math.max(0, speedBonus - 0.71); }
+      if (t.isRed) { speedBonus += 20/7; }
+      else { speedBonus = Math.max(0, speedBonus - 5/7); }
       trafficLights.splice(i, 1);
     }
   }
