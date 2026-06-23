@@ -144,30 +144,38 @@ function drawBg(){
   X.fillStyle=sky;X.fillRect(0,0,900,530);
   // Grass base
   X.fillStyle='#2a5518';X.fillRect(0,40,900,490);
-  // Grass patches
-  for(let i=0;i<300;i++){const gx=Math.random()*900,gy=Math.random()*490+40;X.fillStyle=['#3a6b22','#245016','#2e6020','#1d4412'][Math.floor(Math.random()*4)];X.fillRect(gx,gy,1+Math.random()*3,3+Math.random()*5);}
-  // Trees in background
-  for(let i=0;i<8;i++){const tx=60+i*110+Math.sin(i*3)*30,ty=15+Math.random()*20;
-    X.fillStyle='#3b2010';X.fillRect(tx-3,ty+15,6,18);
-    X.fillStyle='#1a5010';X.beginPath();X.arc(tx,ty+10,14,0,Math.PI*2);X.fill();
-    X.fillStyle='#2a6818';X.beginPath();X.arc(tx-5,ty+14,9,0,Math.PI*2);X.fill();
-    X.beginPath();X.arc(tx+5,ty+8,10,0,Math.PI*2);X.fill();}
-  // Flowers
-  for(let i=0;i<40;i++){const fx=Math.random()*900,fy=50+Math.random()*470;X.fillStyle=['#f8f','#ff8','#f88','#8ff'][i%4];X.beginPath();X.arc(fx,fy,1.5,0,Math.PI*2);X.fill();}
+  // Static grass patches (seeded positions)
+  for(let i=0;i<300;i++){const gx=(i*7.3+i*i*0.13)%900,gy=40+(i*11.7+i*i*0.07)%490;X.fillStyle=['#3a6b22','#245016','#2e6020','#1d4412'][i%4];X.fillRect(gx,gy,1+(i%3),3+(i%5));}
+  // Trees (fixed positions)
+  const trees=[{x:60,y:20},{x:180,y:12},{x:310,y:18},{x:430,y:8},{x:540,y:22},{x:660,y:14},{x:770,y:10},{x:870,y:18}];
+  trees.forEach(t=>{
+    X.fillStyle='#3b2010';X.fillRect(t.x-3,t.y+15,6,18);
+    X.fillStyle='#1a5010';X.beginPath();X.arc(t.x,t.y+10,14,0,Math.PI*2);X.fill();
+    X.fillStyle='#2a6818';X.beginPath();X.arc(t.x-5,t.y+14,9,0,Math.PI*2);X.fill();
+    X.beginPath();X.arc(t.x+5,t.y+8,10,0,Math.PI*2);X.fill();});
+  // Small buildings
+  // Cottage near top-right
+  X.fillStyle='#5a4030';X.fillRect(780,45,40,30);X.fillStyle='#8b3020';X.beginPath();X.moveTo(775,45);X.lineTo(800,25);X.lineTo(825,45);X.closePath();X.fill();X.fillStyle='#4a3020';X.fillRect(793,58,14,17);X.fillStyle='#ff8';X.fillRect(795,60,4,5);X.fillRect(803,60,4,5);
+  // Watch tower near mid-left
+  X.fillStyle='#5a5040';X.fillRect(35,380,20,50);X.fillStyle='#6a6050';X.fillRect(30,370,30,12);X.fillStyle='#444';X.fillRect(38,372,4,8);X.fillRect(52,372,4,8);
+  // Small hut bottom-right
+  X.fillStyle='#4a3828';X.fillRect(830,480,35,25);X.fillStyle='#6a4020';X.beginPath();X.moveTo(825,480);X.lineTo(847,462);X.lineTo(870,480);X.closePath();X.fill();X.fillStyle='#2a1a10';X.fillRect(842,490,10,15);
+  // Flowers (fixed)
+  const flowers=[{x:100,y:80},{x:250,y:470},{x:400,y:50},{x:520,y:490},{x:650,y:60},{x:720,y:480},{x:50,y:300},{x:880,y:100},{x:300,y:500},{x:600,y:70}];
+  flowers.forEach((f,i)=>{X.fillStyle=['#f8f','#ff8','#f88','#8ff'][i%4];X.beginPath();X.arc(f.x,f.y,1.5,0,Math.PI*2);X.fill();});
   // Dirt path
   X.strokeStyle='#6b5030';X.lineWidth=40;X.lineCap='round';X.lineJoin='round';
   X.beginPath();X.moveTo(PATH[0].x,PATH[0].y);for(let i=1;i<PATH.length;i++)X.lineTo(PATH[i].x,PATH[i].y);X.stroke();
   X.strokeStyle='#8b6840';X.lineWidth=32;
   X.beginPath();X.moveTo(PATH[0].x,PATH[0].y);for(let i=1;i<PATH.length;i++)X.lineTo(PATH[i].x,PATH[i].y);X.stroke();
-  // Path stones
-  for(let i=0;i<PATH.length-1;i++){const a=PATH[i],b=PATH[i+1];for(let j=0;j<5;j++){const t=Math.random();const px=a.x+(b.x-a.x)*t+(Math.random()-0.5)*20;const py=a.y+(b.y-a.y)*t+(Math.random()-0.5)*20;X.fillStyle='#9a7850';X.beginPath();X.arc(px,py,2+Math.random()*2,0,Math.PI*2);X.fill();}}
+  // Path stones (fixed)
+  for(let i=0;i<PATH.length-1;i++){const a=PATH[i],b=PATH[i+1];for(let j=0;j<5;j++){const t=(j+1)/6;const px=a.x+(b.x-a.x)*t+((j*7)%20-10);const py=a.y+(b.y-a.y)*t+((j*11)%20-10);X.fillStyle='#9a7850';X.beginPath();X.arc(px,py,2+(j%3),0,Math.PI*2);X.fill();}}
   // Gate
   X.fillStyle='#4a3020';X.fillRect(-4,235,24,50);
   X.fillStyle='#6a4830';X.fillRect(0,238,16,44);
   X.fillStyle='#2a1a10';X.fillRect(0,238,16,3);X.fillRect(0,279,16,3);
   X.strokeStyle='#888';X.lineWidth=2;X.beginPath();X.arc(8,260,12,0,Math.PI*2);X.stroke();
   X.fillStyle='#a00';X.fillRect(2,248,4,3);X.fillRect(10,248,4,3);X.fillRect(2,268,4,3);X.fillRect(10,268,4,3);
-  // Gate arch
   X.fillStyle='#3a2010';X.fillRect(-6,230,28,8);X.fillRect(-6,282,28,8);
   X.fillStyle='#555';X.fillRect(-2,228,4,64);X.fillRect(18,228,4,64);
 }
@@ -299,22 +307,24 @@ function draw(){
   particles.forEach(p=>{X.globalAlpha=p.life/p.maxLife;X.fillStyle=p.color;X.beginPath();X.arc(p.x,p.y,p.size,0,Math.PI*2);X.fill();});X.globalAlpha=1;
   // Damage flash
   if(dmgFlash>0){X.fillStyle='rgba(255,0,0,'+(dmgFlash/30)*0.4+')';X.fillRect(0,0,900,530);}
+  // HUD at top
+  X.fillStyle='rgba(0,0,0,0.5)';X.fillRect(0,0,900,28);
+  X.fillStyle='#fff';X.font='bold 13px monospace';
+  X.fillText('💰 '+gold,10,18);
+  for(let i=0;i<5;i++){X.fillStyle=i<lives?'#f44':'#333';X.font='15px sans-serif';X.fillText('♥',100+i*20,19);}
+  X.fillStyle='#fff';X.font='bold 13px monospace';
+  X.fillText('🌊 Wave '+wave,220,18);
+  // Pause/Speed buttons at top
+  X.fillStyle=paused?'#f80':'#555';X.fillRect(380,4,55,20);X.strokeStyle='#888';X.lineWidth=1;X.strokeRect(380,4,55,20);
+  X.fillStyle='#fff';X.font='bold 10px monospace';X.fillText(paused?'▶ PLAY':'⏸ PAUSE',385,17);
+  X.fillStyle=speed===2?'#0f8':'#555';X.fillRect(442,4,35,20);X.strokeStyle='#888';X.strokeRect(442,4,35,20);
+  X.fillStyle='#fff';X.fillText('2X',452,17);
   // Bottom panel
   X.fillStyle='#12121f';X.fillRect(0,530,900,170);
   X.strokeStyle='#333';X.lineWidth=2;X.beginPath();X.moveTo(0,530);X.lineTo(900,530);X.stroke();
-  // HUD
-  X.fillStyle='#fff';X.font='bold 14px monospace';
-  X.fillText('💰 '+gold,10,550);
-  // Lives as hearts
-  for(let i=0;i<5;i++){X.fillStyle=i<lives?'#f44':'#333';X.font='16px sans-serif';X.fillText('♥',90+i*20,552);}
-  X.fillStyle='#fff';X.font='bold 14px monospace';
-  X.fillText('🌊 Wave '+wave,210,550);
-  // Pause/Speed buttons
-  X.fillStyle=paused?'#f80':'#888';X.fillRect(350,536,50,20);X.fillStyle='#fff';X.font='bold 10px monospace';X.fillText(paused?'PLAY':'PAUSE',355,550);
-  X.fillStyle=speed===2?'#0f8':'#888';X.fillRect(410,536,40,20);X.fillText(speed===2?'2X':'1X',420,550);
-  // Trash can
-  X.fillStyle='#555';X.fillRect(840,536,50,22);X.strokeStyle='#888';X.lineWidth=1;X.strokeRect(840,536,50,22);
-  X.fillStyle='#f88';X.font='12px sans-serif';X.fillText('🗑️ Sell',844,552);
+  // Trash can (bigger)
+  X.fillStyle='#442222';X.fillRect(800,534,90,30);X.strokeStyle='#f66';X.lineWidth=2;X.strokeRect(800,534,90,30);
+  X.fillStyle='#f88';X.font='bold 13px monospace';X.fillText('🗑️ SELL',812,554);
   // Shop
   X.fillStyle='#aaa';X.font='10px monospace';X.fillText('SHOP — click to buy, click icon for info',10,572);
   ELEMENTS.forEach((e,i)=>{
@@ -344,7 +354,7 @@ function draw(){
   // Drag
   if(dragItem){X.globalAlpha=0.8;X.save();X.translate(mouseX,mouseY);X.fillStyle=dragItem.color;X.beginPath();X.moveTo(-7,0);X.lineTo(0,-16);X.lineTo(7,0);X.closePath();X.fill();X.fillRect(-5,0,10,10);X.fillStyle='#fff';X.font='bold 8px monospace';X.textAlign='center';X.fillText(dragItem.name,0,22);X.fillText('Lv'+dragItem.level,0,32);X.textAlign='left';X.restore();X.globalAlpha=1;}
   // Wave countdown
-  if(!spawning&&enemies.length===0&&gameState==='playing'){X.fillStyle='#ff0';X.font='bold 13px monospace';X.textAlign='center';X.fillText('Next wave in '+Math.ceil((150-waveTimer)/60)+'s',450,20);X.textAlign='left';}
+  if(!spawning&&enemies.length===0&&gameState==='playing'){X.fillStyle='#ff0';X.font='bold 13px monospace';X.textAlign='center';X.fillText('Next wave in '+Math.ceil((150-waveTimer)/60)+'s',450,45);X.textAlign='left';}
   // Game over
   if(gameState==='gameover'){X.fillStyle='rgba(0,0,0,0.85)';X.fillRect(0,150,900,250);X.fillStyle='#f44';X.font='bold 44px monospace';X.textAlign='center';X.shadowBlur=20;X.shadowColor='#f44';X.fillText('GAME OVER',450,270);X.shadowBlur=0;X.fillStyle='#fff';X.font='18px monospace';X.fillText('Survived '+wave+' waves',450,310);X.fillText('Click to restart',450,350);X.textAlign='left';}
   if(paused&&gameState==='playing'){X.fillStyle='rgba(0,0,0,0.4)';X.fillRect(0,0,900,530);X.fillStyle='#fff';X.font='bold 28px monospace';X.textAlign='center';X.fillText('⏸ PAUSED',450,270);X.textAlign='left';}
@@ -356,8 +366,8 @@ C.addEventListener('mousedown',ev=>{
   const r=C.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
   if(gameState==='gameover'){gameState='playing';gold=100;lives=5;wave=0;enemies=[];bullets=[];particles=[];SLOTS.forEach(s=>s.t=null);BENCH.fill(null);spawning=false;waveTimer=0;dmgFlash=0;return;}
   // Pause/Speed
-  if(mx>=350&&mx<=400&&my>=536&&my<=556){paused=!paused;return;}
-  if(mx>=410&&mx<=450&&my>=536&&my<=556){speed=speed===2?1:2;return;}
+  if(mx>=380&&mx<=435&&my>=4&&my<=24){paused=!paused;return;}
+  if(mx>=442&&mx<=477&&my>=4&&my<=24){speed=speed===2?1:2;return;}
   // Shop buy
   for(let i=0;i<8;i++){const bx=10+i*110,by=578;
     if(mx>=bx&&mx<=bx+104&&my>=by&&my<=by+40){
@@ -374,7 +384,7 @@ C.addEventListener('mouseup',ev=>{
   const r=C.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
   let placed=false;
   // Drop on trash
-  if(mx>=840&&mx<=890&&my>=536&&my<=558){gold+=sellValue(dragItem);placed=true;dragItem=null;dragFrom=null;return;}
+  if(mx>=800&&mx<=890&&my>=534&&my<=564){gold+=sellValue(dragItem);placed=true;dragItem=null;dragFrom=null;return;}
   // Drop on slot
   SLOTS.forEach(s=>{if(!placed&&Math.sqrt((mx-s.x)**2+(my-s.y)**2)<28){if(!s.t){s.t=dragItem;placed=true;}}});
   // Drop on bench
