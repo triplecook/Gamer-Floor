@@ -20,8 +20,8 @@ canvas { border: 2px solid #333; }
 firebase.initializeApp({apiKey:"AIzaSyD6brDwqXf-WeldlapwZLbAyNe7-1yUT3M",authDomain:"gamer-floor.firebaseapp.com",databaseURL:"https://gamer-floor-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"gamer-floor",storageBucket:"gamer-floor.firebasestorage.app",messagingSenderId:"721194925615",appId:"1:721194925615:web:9366ce5acc997c85e990da"});
 const db=firebase.database();
 let globalLB=[];
-function submitDrivingScore(diff,time){db.ref('driving/'+diff).push({time,ts:Date.now()});}
-function loadDrivingLB(diff,cb){db.ref('driving/'+diff).orderByChild('time').limitToLast(5).once('value',snap=>{const s=[];snap.forEach(e=>s.push(e.val().time));s.sort((a,b)=>b-a);cb(s);});}
+function submitDrivingScore(diff,time){db.ref('driving_'+diff).push({time,ts:Date.now()});}
+function loadDrivingLB(diff,cb){db.ref('driving_'+diff).once('value',snap=>{const s=[];snap.forEach(e=>s.push(e.val().time));s.sort((a,b)=>b-a);cb(s.slice(0,5));});}
 </script>
 <script>
 document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });

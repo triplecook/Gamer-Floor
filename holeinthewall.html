@@ -49,8 +49,8 @@ firebase.initializeApp({
   appId:"1:721194925615:web:9366ce5acc997c85e990da"
 });
 const db=firebase.database();
-function submitScore(name,score){db.ref('leaderboard').push({name,score,time:Date.now()});}
-function getLeaderboard(cb){db.ref('leaderboard').orderByChild('score').limitToLast(10).once('value',snap=>{const scores=[];snap.forEach(s=>scores.push(s.val()));scores.reverse();cb(scores);});}
+function submitScore(name,score){db.ref('holeinthewall').push({name,score,time:Date.now()});}
+function getLeaderboard(cb){db.ref('holeinthewall').once('value',snap=>{const scores=[];snap.forEach(s=>scores.push(s.val()));scores.sort((a,b)=>b.score-a.score);cb(scores.slice(0,10));});}
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
