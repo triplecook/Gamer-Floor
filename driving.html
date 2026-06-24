@@ -11,7 +11,7 @@ canvas { border: 2px solid #333; }
 </style>
 </head><body>
 <a class="back" href="index.html">← Back</a>
-<button class="mute-btn" onclick="const m=document.getElementById('music');m.muted=!m.muted;this.textContent=m.muted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
+<button class="mute-btn" id="mute-btn" onclick="toggleMute()">🔊 Music On</button>
 <audio id="music" src="music-driving.mp3" loop></audio>
 <canvas id="game" width="560" height="700"></canvas>
 <div id="name-input" style="display:none;position:fixed;top:75%;left:50%;transform:translate(-50%,-50%);z-index:1000;text-align:center;">
@@ -36,6 +36,8 @@ function loadDrivingLB(diff,cb){
 </script>
 <script>
 document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });
+function toggleMute(){const m=document.getElementById('music');m.muted=!m.muted;localStorage.setItem('muted',m.muted?'1':'0');document.getElementById('mute-btn').textContent=m.muted?'🔇 Music Off':'🔊 Music On';}
+(function(){if(localStorage.getItem('muted')==='1'){const m=document.getElementById('music');m.muted=true;document.getElementById('mute-btn').textContent='🔇 Music Off';}})();
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const LANES = 6, LANE_W = 72, ROAD_X = (560 - LANES * LANE_W) / 2;
@@ -74,7 +76,8 @@ document.addEventListener('keydown', e => {
     if ((e.key === 'a' || e.key === 'ArrowLeft') && player.lane > 0) player.lane--;
     if ((e.key === 'd' || e.key === 'ArrowRight') && player.lane < LANES - 1) player.lane++;
   } else if (gameState === 'over' || gameState === 'win') {
-    if (e.key === 'Enter') { gameState = 'menu'; document.getElementById('name-input').style.display='none'; }
+    if (e.key === 'Enter') { submitName(); init(difficulty); }
+    if (e.key === 'Escape') { document.getElementById('name-input').style.display='none'; gameState = 'menu'; }
   }
 });
 
@@ -342,7 +345,7 @@ function draw() {
     ctx.fillText('CRASH!', 280, 220);
     ctx.fillStyle = '#fff'; ctx.font = '18px monospace';
     ctx.fillText('Survived: ' + (Math.floor(timer*10)/10).toFixed(1) + 's', 280, 260);
-    ctx.fillText('[Enter] for menu', 280, 300);
+    ctx.fillText('[Enter] submit & restart | [Esc] menu', 280, 300);
     const lb = globalLB;
     ctx.fillStyle = '#ff0'; ctx.font = 'bold 18px monospace';
     ctx.fillText('🌐 GLOBAL BEST - ' + difficulty.toUpperCase(), 280, 340);

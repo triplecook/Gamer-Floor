@@ -26,7 +26,7 @@ body{background:#000;overflow:hidden;font-family:monospace;}
 </style>
 </head><body>
 <a class="back" href="index.html">← Back</a>
-<button class="mute-btn" onclick="musicMuted=!musicMuted;this.textContent=musicMuted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
+<button class="mute-btn" onclick="musicMuted=!musicMuted;localStorage.setItem('muted',musicMuted?'1':'0');this.textContent=musicMuted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
 <div id="hud">Score: 0 | ♥♥♥</div>
 <div id="crosshair"></div>
 <div id="controls">
@@ -61,7 +61,7 @@ function getLeaderboard(cb){
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-let musicMuted=false;
+let musicMuted=localStorage.getItem('muted')==='1';
 let audioCtx,musicPlaying=false,lastBeat=0,beatCount=0;
 const bpm=128,beatInterval=60/bpm;
 function initAudio(){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}

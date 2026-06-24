@@ -15,7 +15,7 @@ canvas { cursor: default; display: block; margin-top: 10px; }
 </style>
 </head><body>
 <a class="back" href="index.html">← Back</a>
-<button class="mute-btn" onclick="const m=document.getElementById('music');m.muted=!m.muted;this.textContent=m.muted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
+<button class="mute-btn" id="mute-btn" onclick="const m=document.getElementById('music');m.muted=!m.muted;localStorage.setItem('muted',m.muted?'1':'0');this.textContent=m.muted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
 <audio id="music" src="music-home.mp3" loop></audio>
 <div id="overlay" onclick="closeInfo()"></div>
 <div id="info-modal"><span class="close" onclick="closeInfo()">✕</span><h3 id="info-title"></h3><p id="info-desc"></p></div>
@@ -23,6 +23,7 @@ canvas { cursor: default; display: block; margin-top: 10px; }
 <script>
 document.addEventListener('keydown',()=>{const m=document.getElementById('music');m.volume=0.3;m.play();},{once:true});
 document.addEventListener('click',()=>{const m=document.getElementById('music');m.volume=0.3;m.play();},{once:true});
+if(localStorage.getItem('muted')==='1'){document.getElementById('music').muted=true;document.getElementById('mute-btn').textContent='🔇 Music Off';}
 const C=document.getElementById('game'),X=C.getContext('2d');
 
 function closeInfo(){document.getElementById('info-modal').style.display='none';document.getElementById('overlay').style.display='none';}

@@ -15,7 +15,8 @@ canvas { cursor: default; }
 <audio id="music" src="music-space.mp3" loop></audio>
 <canvas id="game" width="700" height="500"></canvas>
 <script>
-document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; m.play(); }, { once: true });
+document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; if(!musicMuted)m.play(); }, { once: true });
+if(musicMuted)document.getElementById('music').muted=true;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
@@ -382,14 +383,14 @@ function draw() {
   ctx.restore();
 }
 
-let musicMuted = false;
+let musicMuted = localStorage.getItem('muted')==='1';
 canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
   // Mute button area: top-right corner
   if (mx >= 610 && mx <= 690 && my >= 6 && my <= 30) {
     const m = document.getElementById('music');
-    musicMuted = !musicMuted; m.muted = musicMuted; return;
+    musicMuted = !musicMuted; m.muted = musicMuted; localStorage.setItem('muted',musicMuted?'1':'0'); return;
   }
   if (gameState === 'gameover') {
     gameState = 'playing'; level = 1; score = 0; lives = 5; killCount = 0;

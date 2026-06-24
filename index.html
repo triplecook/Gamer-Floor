@@ -37,7 +37,7 @@ footer { margin-top: 50px; color: #555; font-size: 0.8rem; }
 </head><body>
 <canvas id="bg"></canvas>
 <audio id="music" src="music-home.mp3" loop></audio>
-<button class="mute-btn" onclick="const m=document.getElementById('music');m.muted=!m.muted;this.textContent=m.muted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
+<button class="mute-btn" id="mute-btn" onclick="const m=document.getElementById('music');m.muted=!m.muted;localStorage.setItem('muted',m.muted?'1':'0');this.textContent=m.muted?'🔇 Music Off':'🔊 Music On'">🔊 Music On</button>
 <div class="content">
 <h1>🎮 Game Arcade</h1>
 <p class="sub">Welcome! Pick a game and have fun</p>
@@ -78,6 +78,7 @@ footer { margin-top: 50px; color: #555; font-size: 0.8rem; }
 </div>
 <script>
 function startMusic() { const m = document.getElementById('music'); m.volume = 0.4; m.play(); }
+if(localStorage.getItem('muted')==='1'){document.getElementById('music').muted=true;document.getElementById('mute-btn').textContent='🔇 Music Off';}
 document.addEventListener('mousemove', startMusic, { once: true });
 document.addEventListener('keydown', startMusic, { once: true });
 const canvas = document.getElementById('bg');
