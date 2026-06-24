@@ -15,6 +15,7 @@ canvas { cursor: default; }
 <audio id="music" src="music-space.mp3" loop></audio>
 <canvas id="game" width="700" height="500"></canvas>
 <script>
+let musicMuted = localStorage.getItem('muted')==='1';
 document.addEventListener('keydown', () => { const m = document.getElementById('music'); m.volume = 0.35; if(!musicMuted)m.play(); }, { once: true });
 if(musicMuted)document.getElementById('music').muted=true;
 const canvas = document.getElementById('game');
@@ -383,7 +384,7 @@ function draw() {
   ctx.restore();
 }
 
-let musicMuted = localStorage.getItem('muted')==='1';
+
 canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
